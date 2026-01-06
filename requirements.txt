@@ -3,3 +3,5 @@ matplotlib
 yfinance
 ipykernel
 scipy
+times
+turtle
