@@ -4,4 +4,6 @@ yfinance
 ipykernel
 scipy
 times
-turtle
+seaborn
+pandas
+tqdm
