@@ -4,7 +4,7 @@
 
 #include "monteCarlo.cuh"
 
-__global__ void monteCarlo(float s0, float mu, float sigma, int numOfPaths, float T, float timeStep, float* d_normals)
+__global__ void monteCarlo(float s0, float mu, float sigma, int numOfPaths, int numOfSteps, float T, float timeStep, float* d_normals)
 {
     const unsigned tid = threadIdx.x;
     const unsigned bid = blockIdx.x;
@@ -17,7 +17,7 @@ __global__ void monteCarlo(float s0, float mu, float sigma, int numOfPaths, floa
     if ( s_idx < numOfPaths )
     {
         int n = 0;
-        while (n < numOfPaths)
+        while (n < numOfSteps)
         {
             s_curr = s_curr +  mu * s_curr * timeStep + sigma * s_curr * d_normals[n_idx];
             n_idx++;
@@ -25,7 +25,5 @@ __global__ void monteCarlo(float s0, float mu, float sigma, int numOfPaths, floa
         }
     }
     __syncthreads();
-
-    }
 
 }
