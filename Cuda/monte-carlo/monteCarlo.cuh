@@ -6,9 +6,6 @@
 #define CUDA_MONTECARLO_CUH
 
 
-class monteCarlo
-{
-};
-
+    void monteCarlo(float s0, float mu, float sigma, float K, int numOfPaths, int numOfSteps, float T, float r, float timeStep, float* d_normals, float*  d_s);
 
 #endif //CUDA_MONTECARLO_CUH
