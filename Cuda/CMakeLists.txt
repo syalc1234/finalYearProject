@@ -15,6 +15,7 @@ endif()
 
 add_executable(Cuda main.cu
         monte-carlo/monteCarlo.cu
+        bse-explicit/kernels.cuh
 )
 
 target_link_libraries(Cuda PRIVATE CUDA::curand CUDA::cudart)

@@ -31,8 +31,9 @@ __global__ void mc_kernel(float s0, float mu, float sigma, float K, int numOfPat
     }
     __syncthreads();
 }
+
 void monteCarlo(float s0, float mu, float sigma, float K, int numOfPaths, int numOfSteps, float T, float r, float timeStep, float* d_normals, float*  d_s){
     const unsigned BLOCK_SIZE = 1024;
     const unsigned GRID_SIZE = ceil(float(numOfPaths) / float(BLOCK_SIZE));
-    monteCarlo<<<GRID_SIZE, BLOCK_SIZE>>>(s0, mu, sigma, K, numOfPaths, numOfSteps, T, r, timeStep,  d_normals, d_s);
+    mc_kernel<<<GRID_SIZE, BLOCK_SIZE>>>(s0, mu, sigma, K, numOfPaths, numOfSteps, T, r, timeStep,  d_normals, d_s);
 }
