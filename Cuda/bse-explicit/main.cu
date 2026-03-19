@@ -35,8 +35,11 @@ int main()
     int M = static_cast<int>(Smax / spatial_step);
     float dt = time_to_exp / N ;
 
+    thrust::device_vector<float> V_old(M + 1);
+    thrust::device_vector<float> V_new(M + 1);
 
     thrust::device_vector<float> grid((N + 1) * (M + 1));
+
     thrust::device_vector<float> A(M);
     thrust::device_vector<float> B(M);
     thrust::device_vector<float> C(M);
@@ -45,6 +48,8 @@ int main()
     calculate_coeff(A.data().get(), B.data().get(), C.data().get(), dt, risk_free_rate, M, sigma);
     cudaDeviceSynchronize();
 
+    fill_interior_grid(grid.data().get(),A.data().get(), B.data().get(), C.data().get(),M, N);
+    cudaDeviceSynchronize();
 
     return 0;
 }
