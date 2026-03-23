@@ -20,15 +20,37 @@ __global__ void coeff_kernel(float* A, float* B, float* C, float dt, float risk_
 __global__ void fill_interior_grid_kernel(float* V_new, float* V_old, float* A, float* B, float* C, int M)
 {
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    extern __shared__ float tile_of_grid[];
+    int tx = threadIdx.x;
+    int last_interior_point = M - 1;
+    int tile_index = blockIdx.x * blockDim.x + threadIdx.x + 1;
 
-    int stride = blockDim.x * gridDim.x;
-
-    for (int i = index; i < M; i += stride )
+    if (tile_index <= last_interior_point)
     {
-        V_new[i] = A[i] * V_old[i - 1]
-                 + B[i] * V_old[i]
-                 + C[i] * V_old[i + 1];
+        tile_of_grid[tx + 1] = V_old[tile_index];
+    }
+
+    if (tx == 0)
+    {
+        int left = blockIdx.x * blockDim.x;
+        tile_of_grid[0] = V_old[left];
+    }
+
+    int blockLast = min((blockIdx.x + 1) * blockDim.x, last_interior_point);
+
+    if (tile_index == blockLast)
+    {
+        tile_of_grid[(blockLast - blockIdx.x * blockDim.x) + 1] = V_old[blockLast];
+        tile_of_grid[(blockLast - blockIdx.x * blockDim.x) + 2] = V_old[blockLast +  1];
+    }
+
+    __syncthreads();
+
+    if ( tile_index <= last_interior_point)
+    {
+        V_new[tile_index] = A[tile_index] * V_old[tx]
+               + B[tile_index] * V_old[tx + 1]
+               + C[tile_index] * V_old[tx + 2];
     }
  }
 
@@ -36,13 +58,15 @@ void fill_interior_grid(float* grid, float* A, float* B, float*  C, int M, int N
 {
     constexpr int THREADS = 256;
     int blocks = (M - 1 + THREADS - 1) / THREADS;
+    size_t sharedBytes = (THREADS + 2) * sizeof(float);
+
 
     for (int n = N - 1; n >= 0; --n)
     {
         float* V_new = grid +  n * (M + 1);
         float* V_old = grid + (n + 1) * (M + 1);
 
-        fill_interior_grid_kernel<<<blocks, THREADS>>>(
+        fill_interior_grid_kernel<<<blocks, THREADS, sharedBytes>>>(
             V_new, V_old, A, B, C, M);
     }
 }
