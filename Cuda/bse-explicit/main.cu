@@ -47,9 +47,12 @@ int main()
 
     calculate_coeff(A.data().get(), B.data().get(), C.data().get(), dt, risk_free_rate, M, sigma);
     cudaDeviceSynchronize();
+    set_terminal_condition(grid.data().get(), M,  strike_K,  spatial_step);
 
     fill_interior_grid(grid.data().get(),A.data().get(), B.data().get(), C.data().get(),M, N);
     cudaDeviceSynchronize();
+
+
 
     return 0;
 }
