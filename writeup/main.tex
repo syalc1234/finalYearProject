@@ -124,12 +124,19 @@ By submitting your dissertation you declare that you have completed the tutorial
 \chapter{Introduction and Problem Area}
 \section{Brownian Motion}
 \section{The Geometric Brownian Motion}
+The price of a stock is generally modeled using geometric Brownian Motion (GBM)~\ref{alma991008827533008046} governed by the following equation:
+\begin{equation}
+    dS(t) = \mu S(t) dt + \sigma S(t) dW(t)
+    \label{eq:GBM}
+\end{equation}
+where $S_t$ is the price of the stock at time $t$, $\mu$ is drift, $\sigma$ is volatility and $dW_t$ is a standard Brownian Motion which represents the randomness in randomness of price movements.
 \begin{figure}[htbp]
     \centering
     \input{tikz/GBM.tex}
     \caption{75 Geometric Brownian Motion Paths across a 365 day period.}
     \label{fig:gbm}
 \end{figure}
+where 
 
 \section{The Black Scholes Equation and Options}
 An option is a financial contract whose value is derived from an underlying asset, such as a stock or a bond. 
@@ -137,14 +144,24 @@ An options contract grants the holder the right, but not the obligation, to buy 
 known as the strike, and at an agreed-upon future date, known as the maturity date. 
 \subsection{Derivation of the Black Scholes equation}
 Derivation from the GBM
-\begin{equation}
-    dS(t) = \mu S(t) dt + \sigma S(t) dX(t)
-\end{equation}
+
 
 The Black Scholes make certain assumptions, the underlying asset follows and evolves with the GBM (DEFINED IN .....) with constant $\sigma$ and $r$.
-the risk free rate is .....
+the risk free rate is ..... The term $\mu$ in~\ref{eq:GBM} is replaced by $r$
 As well as this other assumptions assume no arbitrage opportunties and that there are no transaction costs or taxes associated with owning the underlying
 
+With these properties in mind it is now possible to construct the Black Scholes Equation \left(BSE\right)
+Let $V = V\left(S,t\right)$ denote the value of an option at time $t$ and stock price $S$
+First we can apply Itô's Lemma to~\ref{eq:GBM} we obtain:
+\begin{align}
+  dV = \left(\frac{\partial V}{\partial t} dt + \frac{\partial V}{\partial S} dS  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2}  \left(dS\right)^2
+\end{align}
+if we substitue $dS$ we obtain:
+\begin{align}
+  dV = \left(\frac{\partial V}{\partial t} \mu S + \frac{\partial V}{\partial S}  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2} \sigma^2 S^2\right) dt + \sigma S \frac{\partial V}{\partial S} dW
+\end{align}
+
+The BSE comes from the construction of a delta hedged portfolio that eliminates the stochastic component of option pricing.
 
 \begin{equation}
 \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}} + r S \frac{\partial V}{\partial S} - r V = 0
