@@ -34,7 +34,7 @@ def main():
     plt.xlabel("Time (Days)")
     plt.ylabel("Price ($)")
     plt.title(r'Geometric Brownian Motion with 75 paths, with $\sigma = 0.1$ and $\mu$=0.2')
-    matplot2tikz.save("GBM")
+    matplot2tikz.save("GBM.tex")
     plt.show()
 
 if __name__ == '__main__':

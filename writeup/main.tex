@@ -7,6 +7,8 @@
 \usepackage{placeins}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
 \usepackage{amsmath}
 \usepackage[english]{babel}
 \IfFontExistsTF{Carlito}
@@ -144,14 +146,14 @@ Derivation from the GBM
 \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}} + r S \frac{\partial V}{\partial S} - r V = 0
      \label{eq:BSE}
 \end{equation}
-with the boundary conditions:
+For a European Call the Boundary Conditions are:
 
 \begin{equation}
     C\left(0,t\right) = 0 \forall t
 \end{equation}
 
 \begin{equation}
-    C\left(S,t\right) \approxS-Ke^{-rT-t} \text{ as } S\rightarrow \infty 
+    C\left(S,t\right) \approx S - Ke^{-r\left(T-t\right)} \text{ as } S\rightarrow \infty
 \end{equation}
 
 
@@ -165,12 +167,12 @@ Alternatively for a put denoted as P(S,t) the boundary conditions are:
 \end{equation}
 
 \begin{equation}
-    C\left(0,t\right) \approxS Ee^{-r\left( T-t \right)} \forall t
+    P\left(0,t\right) \approx Ke^{-r\left(T-t\right)} \forall t
 \end{equation}
 
 
 \begin{equation}
-    C\left(S,T\right) = \max\left\{S-K,0\right\}
+    P\left(S,T\right) = \max\left\{K-S,0\right\}
 \end{equation}
 
 For non-dividend-paying European Call Options, the closed form solution to \ref{eq:BSE} is:
@@ -364,22 +366,23 @@ For benchmarking purposes, the options being priced are as follows
  \hline
 \end{tabular}
 \end{center}
-
+With grid a grid size of 50,000
 \begin{center}
-\begin{tabular}{||c c c c||} 
+\begin{tabular}{||c c c c c||} 
  \hline
- Spatial Step & CPU Time Taken (s) & GPU Time Taken \left(s\right) & Speed Up \left(\%\right)\\ [0.5ex] 
+ Spatial Step & CPU (s) & Numba (s) & GPU Global (s) & GPU Shared (s) \\ [0.5ex]
  \hline\hline
- 3 & 0 & 0 & 0   \\ 
+ 3     & 12.22 & 0.0317 & 0 & 0 \\ 
  \hline
- 1.5 & 0 & 0 & 0   \\
+ 1.5   & 25.17 & 0.0710 & 0 & 0 \\
  \hline
- 0.75 & 0 & 0 & 0  \\
+ 0.75  & 51.97 & 0.1869 & 0 & 0 \\
  \hline
- 0.375 & 0 & 0 & 0  \\
+ 0.375 & 104.96 & 0.3994 & 0 & 0 \\
  \hline
 \end{tabular}
 \end{center}
+\input{tikz/spatialVsTime.tex}
 
 - Also add monte carlo as well as grid sizes for benchmarking., 
 
