@@ -1,0 +1,86 @@
+% This file was created with matplot2tikz v0.5.4.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkorange25512714}{RGB}{255,127,14}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{groupplot}[group style={group size=2 by 1}]
+\nextgroupplot[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+log basis y={10},
+tick align=outside,
+tick pos=left,
+title={Runtime vs spatial step (\(\displaystyle \Delta S\))},
+x grid style={darkgray176},
+xlabel={Spatial step \(\displaystyle \Delta S\)},
+xmajorgrids,
+xmin=0.24375, xmax=3.13125,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Time taken (seconds)},
+ymajorgrids,
+ymin=0.0211071065131661, ymax=157.412125885166,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [semithick, steelblue31119180, mark=*, mark size=3, mark options={solid}]
+table {%
+3 12.2220032215118
+1.5 25.1673588752747
+0.75 51.9741904735565
+0.375 104.956775665283
+};
+\addlegendentry{Python}
+\addplot [semithick, darkorange25512714, mark=*, mark size=3, mark options={solid}]
+table {%
+3 0.03165602684021
+1.5 0.0710630416870117
+0.75 0.186876058578491
+0.375 0.399461507797241
+};
+\addlegendentry{Numba}
+
+\nextgroupplot[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.03)},
+  anchor=south west,
+  draw=lightgray204
+},
+tick align=outside,
+tick pos=left,
+title={Convergence of Explicit FDM to BS Analytical},
+x grid style={darkgray176},
+xlabel={Spatial step size \(\displaystyle \Delta S\)},
+xmajorgrids,
+xmin=0.24375, xmax=3.13125,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Option price V(S, t=0)},
+ymajorgrids,
+ymin=4.61644793477684, ymax=4.62136823697638,
+ytick style={color=black}
+]
+\addplot [thick, steelblue31119180, mark=*, mark size=3, mark options={solid}]
+table {%
+3 4.61667158487682
+1.5 4.62006959414754
+0.75 4.6209314845475
+0.375 4.62114458687641
+};
+\addlegendentry{Explicit FDM price}
+\addplot [thick, steelblue31119180, dashed]
+table {%
+0.24375 4.62120475455018
+3.13125 4.62120475455018
+};
+\addlegendentry{Analytical (Black-Scholes)}
+\end{groupplot}
+
+\end{tikzpicture}

@@ -141,39 +141,30 @@ Derivation from the GBM
     dS(t) = \mu S(t) dt + \sigma S(t) dX(t)
 \end{equation}
 
+The Black Scholes make certain assumptions, the underlying asset follows and evolves with the GBM (DEFINED IN .....) with constant $\sigma$ and $r$.
+the risk free rate is .....
+As well as this other assumptions assume no arbitrage opportunties and that there are no transaction costs or taxes associated with owning the underlying
+
 
 \begin{equation}
 \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}} + r S \frac{\partial V}{\partial S} - r V = 0
      \label{eq:BSE}
 \end{equation}
+
+\subsection{Boundary and Terminal Conditions}
 For a European Call the Boundary Conditions are:
+  \begin{align}
+    C\left(0,t\right) &= 0 \forall t \\
+    C\left(S,t\right) &\approx S - Ke^{-r\left(T-t\right)} \text{ as } S\rightarrow \infty \\
+    C\left(S,T\right) &= \max\left\{S-K,0\right\}
+  \end{align}
 
-\begin{equation}
-    C\left(0,t\right) = 0 \forall t
-\end{equation}
-
-\begin{equation}
-    C\left(S,t\right) \approx S - Ke^{-r\left(T-t\right)} \text{ as } S\rightarrow \infty
-\end{equation}
-
-
-\begin{equation}
-    C\left(S,T\right) = \max\left\{S-K,0\right\}
-\end{equation}
-
-Alternatively for a put denoted as P(S,t) the boundary conditions are:
-\begin{equation}
-    P\left(S,t\right) = 0 \forall t \text{ as } S\rightarrow \infty 
-\end{equation}
-
-\begin{equation}
-    P\left(0,t\right) \approx Ke^{-r\left(T-t\right)} \forall t
-\end{equation}
-
-
-\begin{equation}
-    P\left(S,T\right) = \max\left\{K-S,0\right\}
-\end{equation}
+For a European put option:
+  \begin{align}
+      P\left(0,t\right) &\approx Ke^{-r\left(T-t\right)} \forall t \\
+      P\left(S,t\right) &= 0 \forall t \text{ as } S\rightarrow \infty \\
+      P\left(S,T\right) &= \max\left\{K-S,0\right\}
+  \end{align}
 
 For non-dividend-paying European Call Options, the closed form solution to \ref{eq:BSE} is:
 \begin{equation}
@@ -184,16 +175,10 @@ and for a put it is:
     P(S,t) = Xe^{-r(T-t)}N(-d_2) - SN(-d_1)
 \end{equation}
 where:
-
-\begin{equation}
-    d_1 = \frac{\log(S/X) + (r+ 0.5 \sigma^2)(T-t)} {\sigma \sqrt{T-t}}
-\end{equation}
-
-\begin{equation}
-    d_1 = \frac{\log(S/X) + (r - 0.5 \sigma^2)(T-t)}{\sigma \sqrt{T-t}}
-\end{equation}
-
-
+  \begin{align}
+    d_1 &= \frac{\log(S/X) + (r - 0.5 \sigma^2)(T-t)}{\sigma \sqrt{T-t}}
+    d_2 &= \frac{\log(S/X) + (r+ 0.5 \sigma^2)(T-t)} {\sigma \sqrt{T-t}}
+  \end{align}
 
 \section{The greeks}
 To quantify different aspects of risk in an option position, the term the Greeks is used. 
