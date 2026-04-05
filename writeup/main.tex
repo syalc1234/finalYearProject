@@ -1,0 +1,422 @@
+% !TeX program = xelatex
+\documentclass[11pt]{report}
+\usepackage{fontspec}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{placeins}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{amsmath}
+\usepackage[english]{babel}
+\IfFontExistsTF{Carlito}
+  {\babelfont[english]{rm}{Carlito}}
+  {\babelfont[english]{rm}{Times New Roman}}
+\renewcommand{\baselinestretch}{1.25} 
+\usetikzlibrary{shapes,arrows,positioning,calc} 
+\usetikzlibrary{arrows.meta}
+
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+
+    \vspace*{3cm}
+
+    {\LARGE \textbf{GPU Accelerated Solvers for the Black-Scholes Equation and Applications in Option Pricing} \par}
+
+    \vspace{2cm}
+
+    {\large
+    A dissertation submitted in partial fulfilment of\\
+    the requirements for the degree of\\[0.3cm]
+    \textbf{BACHELOR OF SCIENCE in Computer Science}\\
+    in\\
+    The Queen's University of Belfast
+    \par}
+    {\large
+    by\\[0.01cm]
+    \textbf{Sean Yalcin}\\
+    (40360770)
+    \par}
+    \vspace{2cm}
+    {\large April 2026 \par}
+    \vfill
+\end{titlepage}
+
+\newpage
+\thispagestyle{empty}
+
+\begin{center}
+
+{\small \textbf{SCHOOL OF ELECTRONICS, ELECTRICAL ENGINEERING and COMPUTER SCIENCE}}\\[0.8cm]
+
+{\small \textbf{CSC3002 – COMPUTER SCIENCE PROJECT}}\\[0.5cm]
+
+{\large \textbf{Dissertation Cover Sheet}}\\[1cm]
+
+\end{center}
+
+{\small
+A signed and completed cover sheet must accompany the submission of the Computer\\
+Science dissertation submitted for assessment.\\[0.3cm]
+\textbf{Work submitted without a cover sheet will NOT be marked.}
+}
+
+\vspace{1.2cm}
+
+\noindent
+\begin{tabular}{p{7cm} p{7cm}}
+\textbf{Student Name:} & \textbf{Student Number:} \\
+\\[0.8cm]
+\textbf{Project Title:} & \\
+\\[0.8cm]
+\textbf{Supervisor:} & \\
+\end{tabular}
+
+\vspace{1.2cm}
+
+\begin{center}
+{\large \textbf{Declaration of Academic Integrity}}
+\end{center}
+
+\vspace{0.5cm}
+
+{\small Before submitting your dissertation, please check that the submission:}
+
+\vspace{0.5cm}
+
+\begin{enumerate}
+\small
+\item Has a full bibliography attached laid out according to the guidelines specified in the Student Project Handbook
+\item Contains full acknowledgement of all secondary sources used (paper-based and electronic)
+\item Contains full acknowledgement of generative AI usage throughout the project
+\item Does not exceed the specified page limit
+\item Is clearly presented and proof-read
+\item Is submitted on, or before, the specified or agreed due date.
+\end{enumerate}
+
+\vspace{1cm}
+
+{\small
+By submitting your dissertation you declare that you have completed the tutorial on plagiarism at\\
+\texttt{http://www.qub.ac.uk/cite2write/introduction5.html} and are aware that it is an academic offence to plagiarise.
+}
+
+\vspace{1.5cm}
+
+\noindent
+\begin{tabular}{p{5cm} p{5cm} p{5cm}}
+\textbf{Student's signature} & \textbf{Name (printed)} & \textbf{Date of submission} \\
+\end{tabular}
+
+
+
+\section*{Acknowledgements}
+\section*{Abstract}
+\newpage
+\tableofcontents
+\newpage
+
+\chapter{Introduction and Problem Area}
+\section{Brownian Motion}
+\section{The Geometric Brownian Motion}
+\begin{figure}[htbp]
+    \centering
+    \input{tikz/GBM.tex}
+    \caption{75 Geometric Brownian Motion Paths across a 365 day period.}
+    \label{fig:gbm}
+\end{figure}
+
+\section{The Black Scholes Equation and Options}
+An option is a financial contract whose value is derived from an underlying asset, such as a stock or a bond. 
+An options contract grants the holder the right, but not the obligation, to buy or sell an asset at a predetermined price, 
+known as the strike, and at an agreed-upon future date, known as the maturity date. 
+\subsection{Derivation of the Black Scholes equation}
+Derivation from the GBM
+\begin{equation}
+    dS(t) = \mu S(t) dt + \sigma S(t) dX(t)
+\end{equation}
+
+
+\begin{equation}
+\frac{\partial V}{\partial t} + \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}} + r S \frac{\partial V}{\partial S} - r V = 0
+     \label{eq:BSE}
+\end{equation}
+with the boundary conditions:
+
+\begin{equation}
+    C\left(0,t\right) = 0 \forall t
+\end{equation}
+
+\begin{equation}
+    C\left(S,t\right) \approxS-Ke^{-rT-t} \text{ as } S\rightarrow \infty 
+\end{equation}
+
+
+\begin{equation}
+    C\left(S,T\right) = \max\left\{S-K,0\right\}
+\end{equation}
+
+Alternatively for a put denoted as P(S,t) the boundary conditions are:
+\begin{equation}
+    P\left(S,t\right) = 0 \forall t \text{ as } S\rightarrow \infty 
+\end{equation}
+
+\begin{equation}
+    C\left(0,t\right) \approxS Ee^{-r\left( T-t \right)} \forall t
+\end{equation}
+
+
+\begin{equation}
+    C\left(S,T\right) = \max\left\{S-K,0\right\}
+\end{equation}
+
+For non-dividend-paying European Call Options, the closed form solution to \ref{eq:BSE} is:
+\begin{equation}
+  C(S,t) = SN(d_1) - Xe^{-r(T-t)}N(d_2)
+\end{equation}
+and for a put it is:
+\begin{equation}
+    P(S,t) = Xe^{-r(T-t)}N(-d_2) - SN(-d_1)
+\end{equation}
+where:
+
+\begin{equation}
+    d_1 = \frac{\log(S/X) + (r+ 0.5 \sigma^2)(T-t)} {\sigma \sqrt{T-t}}
+\end{equation}
+
+\begin{equation}
+    d_1 = \frac{\log(S/X) + (r - 0.5 \sigma^2)(T-t)}{\sigma \sqrt{T-t}}
+\end{equation}
+
+
+
+\section{The greeks}
+To quantify different aspects of risk in an option position, the term the Greeks is used. 
+\subsection{Delta}
+The delta ($\Delta$) of an options contract is defined as the rate of change of the option price with respect to the price of the underlying asset \cite{alma991008589012108046}. Delta can be defined as:
+\begin{equation}
+   \Delta =  \frac{\partial V}{\partial S}
+\end{equation}
+\begin{figure}[htbp]
+    \centering
+    \input{tikz/Delta.tex}
+    \caption{The impact of stock price on the Delta of European Call and Put Option.
+}
+    \label{fig:delta_greek}
+\end{figure}
+For a European call, the delta ranges from 0 to 1 with respect to the underlying price, while for a put, it ranges from -1 to 0. As seen in\ref{fig:delta_greek}, delta changes most rapidly near the strike, where the option is at the money.
+
+\subsection{Theta}
+The theta ($\Theta$) of an option measures the sensitivity of the option to the passage of time, often referred to as \textit{time decay}. It is defined as:
+\begin{equation}
+    \Theta = - \frac{\partial V}{\partial t}
+     \label{eq:theta}
+\end{equation}
+The negative sign in \ref{eq:theta} indicates that, all else equal, an option loses value as it approaches maturity. This arises from reduced uncertainty and, therefore, a diminishing value of optionality. As seen in \ref{fig:theta_greeks}, time decay is not linear, and it accelerates as time to expiration approaches. 
+\begin{figure}[htbp]
+    \centering
+    \input{tikz/Theta.tex}
+    \caption{The Theta of European Options. }
+    \label{fig:theta_greeks}
+\end{figure}
+
+\subsection{Gamma}
+The gamma $\Gamma$ of an option measures the rate of change in delta with respect to the price of the underlying. It is the second-order derivative with respect to the asset price. 
+\begin{equation}
+    \Gamma =\frac{\partial^2 V}{\partial S^2}
+\end{equation}
+Gamma is particularly important for delta hedging, as it quantifies how often a portfolio needs to be rebalanced to remain delta-neutral. A large Gamma indicates that very frequent rebalancing is needed, while a low Gamma indicates the opposite. 
+\begin{figure}[htbp]
+    \centering
+    \input{tikz/Gamma.tex}
+    \caption{Gamma of European options.}
+    \label{fig:gamma_greek}
+\end{figure}
+Figure \ref{fig:gamma_greek} shows that Gamma peaks around the Strike price where the option transitions between in the money and out of the money. As it moves further away from the strike, gamma approaches zero, indicating that delta is constant. 
+
+These sensitivities appear directly in the Black-Scholes equation and the BSE can be written as:
+\begin{equation}
+    \Theta
++ \frac{1}{2}\sigma^2 S^2 \Gamma
++ rS\Delta
+- rV = 0,
+\end{equation}
+
+highlighting the fundamental role of the Greeks in option pricing dynamics.
+
+\subsection{Implied Volatility}
+Within the BSE \ref{eq:BSE}, there is one parameter which cannot be directly observed, known as implied volatility $\sigma$. The implied volatility is the value of $\sigma$, which, when input into the equation \ref{eq:BSE}, produces a price equal to the ... price WORK ON THIS. 
+
+
+
+\section{Finite Difference method for the BSE}
+
+\subsection{Explicit}
+
+\begin{equation}
+    \frac{\partial V}{\partial t}
++ \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}}
++ r S \frac{\partial V}{\partial S}
+- r V = 0
+\end{equation}
+
+$\frac{\partial V}{\partial t}$ rate of change of option value with respect to time: 
+\begin{equation}
+\frac{V_{i,k} - V_{i,k+1}}{\Delta t}
+\end{equation}
+
+$\frac{\partial^{2} V}{\partial S^{2}}$ second derivative with respect to stock price:
+\begin{equation}
+\frac{V_i+1,_k - 2V_i,_k  + V_i-1_,k}{\Delta S^2}
+\end{equation}
+
+
+
+$\frac{\partial V}{\partial S}$ Delta first derivative with respect to stock price:
+\begin{equation}
+\frac{V_{i+1,k} - V_{i-1,k}}{2\Delta S}
+\end{equation}
+
+- Starting with the BSE, substitute in the derivatives
+
+\begin{equation}
+  \frac{V_{i,k} - V_{i,k+1}}{\Delta t} + \frac{1}{2} \sigma^2 S_i^2 \frac{V_i+1,_k - 2V_i,_k  + V_i-1_,k}{\Delta S^2} + rS_i \frac{V_{i+1,k} - V_{i-1,k}}{2\Delta S} - rV_{i,k} = 0
+\end{equation}
+
+Move the first derivative to the lhs to solve for $V_{i,k}$
+\begin{equation}
+V_{i,k}  = V_{i,k+1} +  \Delta t + \frac{1}{2} \sigma^2 S_i^2 \frac{V_{i+1,k+1} - 2V{_i,_{k+1}}  + V_{i-1_,k+1}}{\Delta S^2} + rS_i \frac{V_{i+1,k+1} - V_{i-1,k+1}}{2\Delta S} - rV_{i,k+1}
+\end{equation}
+
+Collect the coefficients:
+\begin{equation}
+  V_{s,t} = A_t V_{s+1,t-1} + B_t V_{s+1, t} + C_t V_{s+1,t+1}
+\end{equation}
+
+
+where:
+\begin{equation}
+A_t = \frac{1}{2} \Delta t \left(\sigma^2 i^2 - r i\right)
+\end{equation}
+\begin{equation}
+B_t = 1 - \Delta t \left(\sigma^2 i^2 + r\right)
+\end{equation}
+\begin{equation}
+C_t = \frac{1}{2} \Delta t \left(\sigma^2 i^2 + r i\right)
+\end{equation}
+
+
+
+
+The option price today is $V_{s, 0}$ where $s$ corresponds to the current stock price
+
+
+\section{Application of GPUS}
+For benchmarking purposes, the options being priced are as follows
+
+\begin{center}
+\begin{tabular}{||c c ||} 
+ \hline
+ Parameter & Value \\ [0.5ex] 
+ \hline\hline
+ Strike (K) & 100  \\ 
+ \hline
+ Risk-free rate($r$) & 0.05  \\
+ \hline
+ Volatility ($\sigma$) & 0.20 \\
+ \hline
+\end{tabular}
+\end{center}
+
+
+\begin{center}
+\begin{tabular}{||c c c c||} 
+ \hline
+ S & Moneyness & Call Price & Put Price \\ [0.5ex] 
+ \hline\hline
+ 80 & Deep OTM call & 1.86 & 16.98 \\ 
+ \hline
+ 90 & OTM call & 5.10 & 10.20 \\
+ \hline
+ 100 & ATM & 10.45 & 5.57 \\
+ \hline
+ 110 & ITM call & 17.68 & 2.79 \\
+ \hline
+ 120 & Deep ITM call & 26.16 & 1.30 \\ [1ex] 
+ \hline
+\end{tabular}
+\end{center}
+
+
+\begin{center}
+\begin{tabular}{||c c c ||} 
+ \hline
+ T & Call Price & Put Price \\ [0.5ex] 
+ \hline\hline
+ 0.25   & 4.60 & 3.37 \\ 
+ \hline
+ 0.50  & 6.88 & 4.43 \\
+ \hline
+ 1.00 & 10.45 & 5.57 \\
+ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{||c c c c||} 
+ \hline
+ Spatial Step & CPU Time Taken (s) & GPU Time Taken \left(s\right) & Speed Up \left(\%\right)\\ [0.5ex] 
+ \hline\hline
+ 3 & 0 & 0 & 0   \\ 
+ \hline
+ 1.5 & 0 & 0 & 0   \\
+ \hline
+ 0.75 & 0 & 0 & 0  \\
+ \hline
+ 0.375 & 0 & 0 & 0  \\
+ \hline
+\end{tabular}
+\end{center}
+
+- Also add monte carlo as well as grid sizes for benchmarking., 
+
+\begin{center}
+\begin{tabular}{||c c c c c ||} 
+ \hline
+ Grid Size & Power of 2 & CPU Time Taken (s) & GPU Time Taken (s) & Speed Up $\left(\%\right)$\\ [0.5ex] 
+ \hline\hline
+ 65,536 & $2^{16}$ & 0 & 0 & 0 \\ 
+ \hline
+ 262,144 & $2^{18}$ & 0 & 0 & 0  \\
+ \hline
+ 1,048,576 & $2^{20}$ & 0 & 0 & 0 \\
+ \hline
+ 4,194,304 & $2^{22}$ & 0 & 0 & 0 \\
+ \hline
+ 16,777,216 & $2^{24}$  & 0 & 0 & 0 \\ 
+ \hline
+\end{tabular}
+\end{center}
+
+\chapter{Extension to the Heston Model}
+\chapter{System Requirements and Specifications}
+\section{ }
+
+\chapter{Design}
+\chapter{Implementation}
+\chapter{Testing}
+\chapter{System Evaluation and Experimental Results}
+
+
+
+
+\bibliographystyle{plain}
+\bibliography{bibliography}
+\chapter{Appendices}
+
+\section{Appendices}
+
+\end{document}
