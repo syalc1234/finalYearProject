@@ -123,7 +123,7 @@ BseExplicitResult priceBlackScholesExplicitCall(const optionTypeBSE& settings)
     const int nSteps = std::max(1, static_cast<int>(std::round(settings.N)));
     const float dt = settings.time_to_exp / static_cast<float>(nSteps);
 
-    constexpr int blockSize = 512;
+    constexpr int blockSize = 256;
     const int valueBlocks = std::max(1, (m + 1 + blockSize - 1) / blockSize);
     const size_t sharedBytes = (blockSize + 2) * sizeof(float);
 
