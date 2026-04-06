@@ -154,7 +154,7 @@ With these properties in mind it is now possible to construct the Black Scholes 
 Let $V = V\left(S,t\right)$ denote the value of an option at time $t$ and stock price $S$
 First we can apply Itô's Lemma to~\ref{eq:GBM} we obtain:
 \begin{align}
-  dV = \left(\frac{\partial V}{\partial t} dt + \frac{\partial V}{\partial S} dS  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2}  \left(dS\right)^2
+  dV = \left(\frac{\partial V}{\partial t} dt + \frac{\partial V}{\partial S} dS  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2}\right) \left(dS\right)^2
 \end{align}
 if we substitue $dS$ we obtain:
 \begin{align}
@@ -372,19 +372,36 @@ With grid a grid size of 50,000
 \begin{center}
 \begin{tabular}{||c c c c c||} 
  \hline
- Spatial Step & CPU (s) & Numba (s) & GPU Global (s) & GPU Shared (s) \\ [0.5ex]
+ Spatial Step & CPU (ms) & Numba (ms) & GPU Global (ms) & GPU Shared (ms) \\ [0.5ex]
  \hline\hline
- 3     & 12.22 & 0.0317 & 0 & 0 \\ 
+ 3     & 28,585 & 2056 & 287.078 & 193.666 \\ 
  \hline
- 1.5   & 25.17 & 0.0710 & 0 & 0 \\
+ 1.5   & 53,345 & 681 & 290.095 & 189.912 \\
  \hline
- 0.75  & 51.97 & 0.1869 & 0 & 0 \\
+ 0.75  & 116,519 & 569 &  290.604 & 215.09 \\
  \hline
- 0.375 & 104.96 & 0.3994 & 0 & 0 \\
+ 0.375 & 273,270 & 1139 & 287.748 & 289.426 \\
  \hline
 \end{tabular}
 \end{center}
 \input{tikz/spatialVsTime.tex}
+\input{tikz/spatialVsTimeGPU.tex}
+
+\begin{center}
+\begin{tabular}{||c c c||} 
+ \hline
+ Spatial Step & Speed up CPU vs GPU Global & Numba vs GPU Shared\\ [0.5ex]
+ \hline\hline
+ 3     & 99.57224169041167 & 10.616215546352999 \\ 
+ \hline
+ 1.5   & 183.88803667764006 & 3.585871350941489 \\
+ \hline
+ 0.75  & 400.954563598574 & 2.645404249383979 \\
+ \hline
+ 0.375 & 949.6851411651862 & 3.9583246451756398  \\
+ \hline
+\end{tabular}
+\end{center}
 
 - Also add monte carlo as well as grid sizes for benchmarking., 
 

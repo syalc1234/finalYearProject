@@ -71,7 +71,7 @@ optionTypeBSE getBsePreset(int optionType)
 {
     switch (optionType) {
         case 1:
-            return {0.1730f, 0.0375f, 0.0548f, 275.00f, 3.0f, 274.80f, 100000.0f};
+            return {0.1730f, 0.0375f, 0.0548f, 275.00f, 0.375f, 274.80f, 100000.0f};
         case 2:
             return {0.25f, 0.05f, 1.0f, 105.0f, 1.0f, 100.0f, 1000.0f};
         case 3:

@@ -38,30 +38,8 @@ __global__ void fillInteriorKernel(
     float tau,
     int m)
 {
-    extern __shared__ float tile[];
-
     const int index = blockIdx.x * blockDim.x + threadIdx.x;
-    const int blockStart = blockIdx.x * blockDim.x;
-    const int lastActiveThread = min(blockDim.x - 1, m - blockStart);
-    const bool inRange = index <= m;
-
-    if (inRange) {
-        tile[threadIdx.x + 1] = currentValues[index];
-    }
-
-    if (threadIdx.x == 0) {
-        const int leftIndex = max(blockStart - 1, 0);
-        tile[0] = currentValues[leftIndex];
-    }
-
-    if (threadIdx.x == lastActiveThread) {
-        const int rightIndex = min(blockStart + lastActiveThread + 1, m);
-        tile[lastActiveThread + 2] = currentValues[rightIndex];
-    }
-
-    __syncthreads();
-
-    if (!inRange) {
+    if (index > m) {
         return;
     }
 
@@ -82,9 +60,9 @@ __global__ void fillInteriorKernel(
     const float b = 1.0f - dt * (sigmaSquared * iSquared + riskFreeRate);
     const float c = 0.5f * dt * (sigmaSquared * iSquared + riskFreeRate * i);
 
-    nextValues[index] = a * tile[threadIdx.x]
-        + b * tile[threadIdx.x + 1]
-        + c * tile[threadIdx.x + 2];
+    nextValues[index] = a * currentValues[index - 1]
+        + b * currentValues[index]
+        + c * currentValues[index + 1];
 }
 
 float interpolatePrice(const thrust::host_vector<float>& values, float currentPrice, float spatialStep, int m)
@@ -125,7 +103,6 @@ BseExplicitResult priceBlackScholesExplicitCall(const optionTypeBSE& settings)
 
     constexpr int blockSize = 256;
     const int valueBlocks = std::max(1, (m + 1 + blockSize - 1) / blockSize);
-    const size_t sharedBytes = (blockSize + 2) * sizeof(float);
 
     thrust::device_vector<float> currentValues(m + 1);
     thrust::device_vector<float> nextValues(m + 1);
@@ -146,7 +123,7 @@ BseExplicitResult priceBlackScholesExplicitCall(const optionTypeBSE& settings)
     for (int step = nSteps - 1; step >= 0; --step) {
         const float tau = settings.time_to_exp - static_cast<float>(step) * dt;
 
-        fillInteriorKernel<<<valueBlocks, blockSize, sharedBytes>>>(
+        fillInteriorKernel<<<valueBlocks, blockSize>>>(
             nextValues.data().get(),
             currentValues.data().get(),
             dt,
