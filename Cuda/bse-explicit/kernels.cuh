@@ -3,6 +3,12 @@
 
 #include "../classDef/optionTypeBSE.h"
 
-float priceBlackScholesExplicitCall(const optionTypeBSE& settings);
+struct BseExplicitResult
+{
+    float price = 0.0f;
+    float timestepKernelMs = 0.0f;
+};
+
+BseExplicitResult priceBlackScholesExplicitCall(const optionTypeBSE& settings);
 
 #endif //CUDA_BSE_EXPLICIT_KERNELS_CUH

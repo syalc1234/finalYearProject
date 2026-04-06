@@ -71,7 +71,7 @@ optionTypeBSE getBsePreset(int optionType)
 {
     switch (optionType) {
         case 1:
-            return {0.1730f, 0.0375f, 0.0548f, 275.00f, 3.0f, 274.80f, 50000.0f};
+            return {0.1730f, 0.0375f, 0.0548f, 275.00f, 3.0f, 274.80f, 100000.0f};
         case 2:
             return {0.25f, 0.05f, 1.0f, 105.0f, 1.0f, 100.0f, 1000.0f};
         case 3:
@@ -181,27 +181,13 @@ void runBlackScholesExplicitCall(const optionTypeBSE& settings)
               << ", S=" << settings.current_price
               << ", N=" << settings.N << '\n';
 
-    cudaEvent_t start{};
-    cudaEvent_t stop{};
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
-
     try {
-        const float optionPrice = priceBlackScholesExplicitCall(settings);
-        cudaEventRecord(stop);
-        cudaEventSynchronize(stop);
-
-        float elapsedMs = 0.0f;
-        cudaEventElapsedTime(&elapsedMs, start, stop);
-        std::cout << "Option Price: " << optionPrice << '\n';
-        std::cout << "Elapsed Time (ms): " << elapsedMs << '\n';
+        const BseExplicitResult result = priceBlackScholesExplicitCall(settings);
+        std::cout << "Option Price: " << result.price << '\n';
+        std::cout << "Time-Step Kernel Loop (ms): " << result.timestepKernelMs << '\n';
     } catch (const std::exception& ex) {
         std::cerr << "Black-Scholes explicit solver failed: " << ex.what() << '\n';
     }
-
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
 }
 
 void runBlackScholesExplicitPut(const optionTypeBSE& settings)
