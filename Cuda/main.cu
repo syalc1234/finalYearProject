@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cuda_runtime.h>
+#include <exception>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -7,6 +8,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 
+#include "bse-explicit/kernels.cuh"
 #include "classDef/optionTypeBSE.h"
 #include "classDef/optionTypeMC.h"
 #include "monte-carlo/monteCarlo.cuh"
@@ -57,7 +59,7 @@ optionTypeMC getMonteCarloPreset(int optionType)
 {
     switch (optionType) {
         case 1:
-            return {100.0f, 0.2f, 0.2f, 120.0f, 0.1f, 100000, 1000, 1.0f};
+            return {274.80f, 0.0375f, 0.1730f, 275.00f, 0.0375f, 33554432, 128, 1.0f};
         case 2:
             return {100.0f, 0.2f, 0.25f, 105.0f, 0.05f, 100000, 1000, 1.0f};
         default:
@@ -69,7 +71,7 @@ optionTypeBSE getBsePreset(int optionType)
 {
     switch (optionType) {
         case 1:
-            return {0.2f, 0.05f, 1.0f, 100.0f, 1.0f, 100.0f, 1000.0f};
+            return {0.1730f, 0.0375f, 0.0548f, 275.00f, 3.0f, 274.80f, 50000.0f};
         case 2:
             return {0.25f, 0.05f, 1.0f, 105.0f, 1.0f, 100.0f, 1000.0f};
         case 3:
@@ -178,7 +180,28 @@ void runBlackScholesExplicitCall(const optionTypeBSE& settings)
               << ", dS=" << settings.spatial_step
               << ", S=" << settings.current_price
               << ", N=" << settings.N << '\n';
-    std::cout << "Hook your explicit call solver into `runBlackScholesExplicitCall()`.\n";
+
+    cudaEvent_t start{};
+    cudaEvent_t stop{};
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    try {
+        const float optionPrice = priceBlackScholesExplicitCall(settings);
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+
+        float elapsedMs = 0.0f;
+        cudaEventElapsedTime(&elapsedMs, start, stop);
+        std::cout << "Option Price: " << optionPrice << '\n';
+        std::cout << "Elapsed Time (ms): " << elapsedMs << '\n';
+    } catch (const std::exception& ex) {
+        std::cerr << "Black-Scholes explicit solver failed: " << ex.what() << '\n';
+    }
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 }
 
 void runBlackScholesExplicitPut(const optionTypeBSE& settings)

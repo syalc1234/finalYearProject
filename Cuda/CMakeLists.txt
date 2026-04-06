@@ -15,11 +15,12 @@ endif()
 
 add_executable(Cuda main.cu
         monte-carlo/monteCarlo.cu
+        bse-explicit/kernels.cu
         bse-explicit/kernels.cuh
-        ClassDef/optionTypeMC.cpp
-        ClassDef/optionTypeMC.h
-        ClassDef/optionTypeBSE.cpp
-        ClassDef/optionTypeBSE.h
+        classDef/optionTypeMC.cpp
+        classDef/optionTypeMC.h
+        classDef/optionTypeBSE.cpp
+        classDef/optionTypeBSE.h
 )
 
 target_link_libraries(Cuda PRIVATE CUDA::curand CUDA::cudart)

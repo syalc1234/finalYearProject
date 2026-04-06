@@ -391,20 +391,27 @@ With grid a grid size of 50,000
 \begin{center}
 \begin{tabular}{||c c c c c ||} 
  \hline
- Grid Size & Power of 2 & CPU Time Taken (s) & GPU Time Taken (s) & Speed Up $\left(\%\right)$\\ [0.5ex] 
+ Grid Size & Power of 2 & CPU Time Taken (ms) & GPU Time Taken (ms) & Speed Up $\left(\%\right)$\\ [0.5ex] 
  \hline\hline
- 65,536 & $2^{16}$ & 0 & 0 & 0 \\ 
+ 65,536 & $2^{16}$ & 3.03077698 & 9.07162 & 0.3340943491901116 \\ 
  \hline
- 262,144 & $2^{18}$ & 0 & 0 & 0  \\
+ 262,144 & $2^{18}$ & 11.97242737 & 9.67373 & 1.2376226512420752  \\
  \hline
- 1,048,576 & $2^{20}$ & 0 & 0 & 0 \\
+ 1,048,576 & $2^{20}$ &  50.22287369 & 9.3143 & 5.392018046444714 \\
  \hline
- 4,194,304 & $2^{22}$ & 0 & 0 & 0 \\
+ 4,194,304 & $2^{22}$ & 196.63167 & 9.69728 & 20.276992105002645 \\
  \hline
- 16,777,216 & $2^{24}$  & 0 & 0 & 0 \\ 
+ 16,777,216 & $2^{24}$  & 836.00306511 & 10.4386 & 80.08766167014734 \\ 
+ \hline
+ 33,554,432 & $2^{25}$  & 2006.6242218 &  11.0386 & 181.7824925081079 \\ 
  \hline
 \end{tabular}
 \end{center}
+\input{tikz/cpuVsGPUMCarlo.tex}
+
+\begin{align}
+  speedup = \frac{t_{CPU}}{t_{GPU}}
+\end{align}
 
 \chapter{Extension to the Heston Model}
 \chapter{System Requirements and Specifications}
