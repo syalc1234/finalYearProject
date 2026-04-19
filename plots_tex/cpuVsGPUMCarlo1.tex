@@ -1,0 +1,92 @@
+% This file was created with matplot2tikz v0.5.4.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{groupplot}[group style={group size=2 by 1}]
+\nextgroupplot[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+log basis x={2},
+log basis y={10},
+tick align=outside,
+tick pos=left,
+title={Runtime vs number of Monte Carlo paths},
+x grid style={darkgray176},
+xlabel={Number of Monte Carlo paths base 2},
+xmajorgrids,
+xmin=47975.1600847463, xmax=45836704.9045279,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Time taken (ms)},
+ymajorgrids,
+ymin=2.19032407340035, ymax=2776.5893516846,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [semithick, steelblue31119180, mark=*, mark size=3, mark options={solid}]
+table {%
+65536 3.03077698
+262144 11.97242737
+1048576 50.22287369
+4194304 196.63167
+16777216 836.00306511
+33554432 2006.6242218
+};
+\addlegendentry{Python}
+
+\nextgroupplot[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+log basis x={2},
+tick align=outside,
+tick pos=left,
+title={CPU Monte Carlo price estimates vs number of paths},
+x grid style={darkgray176},
+xlabel={Spatial step size \(\displaystyle \Delta S\)},
+xmajorgrids,
+xmin=47975.1600847463, xmax=45836704.9045279,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Option price V(S, t=0)},
+ymajorgrids,
+ymin=23.961627739, ymax=23.995612041,
+ytick style={color=black}
+]
+\addplot [thick, steelblue31119180, mark=*, mark size=3, mark options={solid}]
+table {%
+65536 23.96317248
+262144 23.98589092
+1048576 23.98139959
+4194304 23.9940673
+16777216 23.96806923
+33554432 23.97552303
+};
+\addlegendentry{CPU (Python) Price}
+\addplot [thick, steelblue31119180, dashed]
+table {%
+47975.1600847462 23.9785783872683
+45836704.9045278 23.9785783872683
+};
+\addlegendentry{Analytical (Black-Scholes)}
+\end{groupplot}
+
+\end{tikzpicture}

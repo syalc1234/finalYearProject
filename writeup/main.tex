@@ -1,23 +1,39 @@
 % !TeX program = xelatex
 \documentclass[11pt]{report}
-\usepackage{fontspec}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \DeclareUnicodeCharacter{00F4}{\^o}
+  \DeclareUnicodeCharacter{0394}{\ensuremath{\Delta}}
+  \DeclareUnicodeCharacter{2013}{--}
+\else
+  \usepackage{fontspec}
+  \setmainfont{Times New Roman}
+\fi
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{geometry}
 \usepackage{placeins}
+\usepackage{float}
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepgfplotslibrary{groupplots}
 \pgfplotsset{compat=1.18}
 \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{nicefrac}
 \usepackage[english]{babel}
-\IfFontExistsTF{Carlito}
-  {\babelfont[english]{rm}{Carlito}}
-  {\babelfont[english]{rm}{Times New Roman}}
 \renewcommand{\baselinestretch}{1.25} 
 \usetikzlibrary{shapes,arrows,positioning,calc} 
 \usetikzlibrary{arrows.meta}
 
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\providecommand{\tikzsetnextfilename}[1]{}
 
 \begin{document}
 
@@ -122,51 +138,145 @@ By submitting your dissertation you declare that you have completed the tutorial
 \newpage
 
 \chapter{Introduction and Problem Area}
-\section{Brownian Motion}
+
+\chapter{Background}
 \section{The Geometric Brownian Motion}
-The price of a stock is generally modeled using geometric Brownian Motion (GBM)~\ref{alma991008827533008046} governed by the following equation:
+Finanical asset prices are inherently uncertain and capturing their stochastic behaviour is central to finance, particularly in pricing derivatives. 
+The Geometric Brownian Motion is a fundamental model for stock price dynamics \cite{alma991001559369708046}. It forms the foundation of the Black--Scholes framework and is widely used for derivatives pricing. It is governed by the stochastic differential equation
 \begin{equation}
-    dS(t) = \mu S(t) dt + \sigma S(t) dW(t)
+    dS_t = \mu S_t\,dt + \sigma S_t\,dW_t
     \label{eq:GBM}
 \end{equation}
-where $S_t$ is the price of the stock at time $t$, $\mu$ is drift, $\sigma$ is volatility and $dW_t$ is a standard Brownian Motion which represents the randomness in randomness of price movements.
-\begin{figure}[htbp]
+where $S_t$ is the stock price at time $t$, $\mu$ is the drift, $\sigma$ is the volatility, and $W_t$ is a standard Brownian motion.
+To simulate how asset prices evolve, the SDE in (\ref{eq:GBM}) must be discretised. We use the log-Euler method \cite{alma991003696519708046}. Let $x_t = \ln(S_t)$ denote the log-price process. Applying It\^o's lemma \cite{alma991008758143208046} gives
+\begin{equation}
+  dx_t = \left(\mu - \frac{1}{2}\sigma^2\right)dt + \sigma\,dW_t.
+\end{equation}
+Using the log-Euler method, this SDE is discretised as
+\begin{equation}
+  x_{n+1} = x_n + \left(\mu - \frac{1}{2}\sigma^2\right)\Delta t + \sigma\sqrt{\Delta t}\,Z_{n+1},
+\end{equation}
+where $Z_{n+1} \sim \mathcal{N}(0,1)$. At each time step, a new independent sample of $Z_{n+1}$ is drawn, so the stochastic shock is independent across increments. Exponentiating, and using $S_{n+1} = \exp(x_{n+1})$, gives
+\begin{equation}
+  S_{n+1} = S_n \exp\left(\left(\mu - \frac{1}{2}\sigma^2\right)\Delta t + \sigma\sqrt{\Delta t}\,Z_{n+1}\right).
+  \label{eq:discGBM}
+\end{equation}
+
+A key property of GBM is that, by It\^o's lemma, $\ln(S_t)$ is normally distributed, which means $S_t$ is lognormally distributed (shown in \ref{fig:gbm}) which ensures that simulated prices remain strictly positive. This is a essential property for its applications in finance. 
+
+Equation \ref{eq:discGBM} is then used to simulate sample paths of the stock price. Figure~\ref{fig:gbm} shows 75 simulated geometric Brownian motion paths over a 365-day period.
+\begin{figure}[H]
     \centering
-    \input{tikz/GBM.tex}
-    \caption{75 Geometric Brownian Motion Paths across a 365 day period.}
+    \begin{minipage}[t]{0.44\textwidth}
+        \centering
+        \input{tikz/GBM.tex}
+    \end{minipage}
+    \hspace{0.07\textwidth}
+    \begin{minipage}[t]{0.44\textwidth}
+        \centering
+        \input{tikz/logNormaldist.tex}
+    \end{minipage}
+    \caption{Left: simulated geometric Brownian motion paths over a 365-day period with $\sigma = 0.1$ and $\mu = 0.2$. Right: the lognormal distribution implied by the GBM model.}
     \label{fig:gbm}
 \end{figure}
-where 
 
 \section{The Black Scholes Equation and Options}
-An option is a financial contract whose value is derived from an underlying asset, such as a stock or a bond. 
-An options contract grants the holder the right, but not the obligation, to buy or sell an asset at a predetermined price, 
-known as the strike, and at an agreed-upon future date, known as the maturity date. 
+An option is a financial contract whose value is derived from an underlying asset, such as a stock or a bond. The most basic type of option is the European Option
+which grants the holder the right, but not the obligation, to buy or sell an asset at a predetermined price, known as the strike (denoted at $K$), and at an agreed-upon future date, known as the maturity date denoted as $T$ \cite{alma991008708403508046}. The two European options we will be focusing on are the Call and Put.
+
+A Call option gives the buyer the right to buy an underlying asset at $K$ at a given time $T$. The payoff function at maturity can be denoted as:
+\begin{equation}
+  V(S,T) = max(S-K,0)
+\end{equation}
+where $S$ is the stock price at maturity
+ADD GRAPH
+On the other hand a Put option gives the buyer the right to sell an underlying asset at $K$ and at given time $T$. The payoff function can be denoted as:
+\begin{equation}
+  V(S,T) = max(K-S,0)
+\end{equation}
+
+ADD GRAPH
+
+
 \subsection{Derivation of the Black Scholes equation}
 Derivation from the GBM
 
 
-The Black Scholes make certain assumptions, the underlying asset follows and evolves with the GBM (DEFINED IN .....) with constant $\sigma$ and $r$.
-the risk free rate is ..... The term $\mu$ in~\ref{eq:GBM} is replaced by $r$
-As well as this other assumptions assume no arbitrage opportunties and that there are no transaction costs or taxes associated with owning the underlying
+The Black Scholes rests on certain assumptions, the underlying asset evolves with the GBM (DEFINED IN .....) with constant $\sigma$ and a constant risk free rate $r$.
+Additionally no arbitrage opportunties, exist which means it is impossible to make a free profit, and there are no transaction costs or taxes associated with owning the underlying
 
-With these properties in mind it is now possible to construct the Black Scholes Equation \left(BSE\right)
+With these properties in mind it is now possible to construct the Black-Scholes equation (BSE).
 Let $V = V\left(S,t\right)$ denote the value of an option at time $t$ and stock price $S$
-First we can apply Itô's Lemma to~\ref{eq:GBM} we obtain:
+First we can apply Itô's Lemma \cite{alma991008758143208046} to~\ref{eq:GBM} we obtain:
 \begin{align}
-  dV = \left(\frac{\partial V}{\partial t} dt + \frac{\partial V}{\partial S} dS  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2}\right) \left(dS\right)^2
+  dV = \frac{\partial V}{\partial t} dt 
+  + \frac{\partial V}{\partial S} dS  
+  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2} \left(dS\right)^2
 \end{align}
-if we substitue $dS$ we obtain:
+Substituting $dS = \mu S\,dt + \sigma S\,dW$ and using $(dS)^2 = 
+\sigma^2 S^2\,dt$ under It\^{o}'s rules, this simplifies to:
 \begin{align}
   dV = \left(\frac{\partial V}{\partial t} \mu S + \frac{\partial V}{\partial S}  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2} \sigma^2 S^2\right) dt + \sigma S \frac{\partial V}{\partial S} dW
+  \label{eq:ItoApplicationBSE}
+\end{align}
+To eliminate the stochastic term $dW$ in \eqref{eq:ItoApplicationBSE}, we construct a delta-hedged portfolio.
+ Delta hedging refers to the process of buying or selling the underlying asset according to $\Delta = \frac{\partial V}{\partial S}$ \cite{alma991008837579408046}. 
+ Let $\Pi$ denote a delta-hedged portfolio consisting of one long option position and a short position of $\Delta$ units in the underlying asset:
+\begin{equation}
+ \Pi = V\left(S,t\right) - \Delta S
+\end{equation}
+The change in portfolio $\Pi$ over time $dt$ is as follows: 
+\begin{equation}
+    d\Pi = dV - \frac{\partial V}{\partial S}\,dS.
+\end{equation}
+Substituting the expressions for $dV$ and $dS$:
+\begin{align}
+    d\Pi &= \left(\frac{\partial V}{\partial t} 
+              + \mu S \frac{\partial V}{\partial S}  
+              + \frac{1}{2}\sigma^2 S^2 \frac{\partial^{2} V}{\partial S^2}
+            \right)dt 
+          + \sigma S \frac{\partial V}{\partial S}\,dW 
+          - \frac{\partial V}{\partial S}\left(\mu S\,dt 
+          + \sigma S\,dW\right).
 \end{align}
 
-The BSE comes from the construction of a delta hedged portfolio that eliminates the stochastic component of option pricing.
+The stochastic terms $\sigma S \frac{\partial V}{\partial S}\,dW$ cancel, 
+as do the $\mu S \frac{\partial V}{\partial S}$ drift terms, leaving a 
+purely deterministic expression:
+\begin{align}
+    d\Pi = \left(\frac{\partial V}{\partial t} 
+             + \frac{1}{2}\sigma^2 S^2 \frac{\partial^{2} V}{\partial S^2}
+           \right)dt. \label{eq:dPi}
+\end{align}
+Since $d\Pi$ contains no $dW$ term, the portfolio is instantaneously 
+riskless. By the no-arbitrage principle, a riskless portfolio must earn 
+exactly the risk-free rate $r$, otherwise an arbitrage opportunity would 
+exist. This give:
+%
+\begin{align}
+    d\Pi = r\Pi\,dt = r\left(V - \frac{\partial V}{\partial S}S\right)dt.
+    \label{eq:noarb}
+\end{align}
+Setting (\ref{eq:dPi}) equal to (\ref{eq:noarb}) and dividing through 
+by $dt$:
+%
+\begin{align}
+    \frac{\partial V}{\partial t} 
+    + \frac{1}{2}\sigma^2 S^2 \frac{\partial^{2} V}{\partial S^2}
+    = r V - rS\frac{\partial V}{\partial S}.
+\end{align}
+%
+Rearranging yields the \textbf{Black-Scholes equation} (BSE):
+%
+\begin{align}
+    \frac{\partial V}{\partial t} 
+    + rS\frac{\partial V}{\partial S}
+    + \frac{1}{2}\sigma^2 S^2 \frac{\partial^{2} V}{\partial S^2}
+    - rV = 0. \label{eq:BSE}
+\end{align}
 
-\begin{equation}
-\frac{\partial V}{\partial t} + \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}} + r S \frac{\partial V}{\partial S} - r V = 0
-     \label{eq:BSE}
-\end{equation}
+\subsection{Risk-Neutral Valuation}
+Risk neutral valuation is a key property of the BSE and explains why the parameter $\mu$ from the underlying GBM is not present in the BSE. The delta hedging argument presented in REFERENCE SECTION renders risk preference of investors irrelevant. In a risk neutral setting the expected return of all assets is the risk free rate $r$\cite{alma991008589012108046}.
 
 \subsection{Boundary and Terminal Conditions}
 For a European Call the Boundary Conditions are:
@@ -174,6 +284,7 @@ For a European Call the Boundary Conditions are:
     C\left(0,t\right) &= 0 \forall t \\
     C\left(S,t\right) &\approx S - Ke^{-r\left(T-t\right)} \text{ as } S\rightarrow \infty \\
     C\left(S,T\right) &= \max\left\{S-K,0\right\}
+    \label{boundaryConditionsCall}
   \end{align}
 
 For a European put option:
@@ -181,21 +292,30 @@ For a European put option:
       P\left(0,t\right) &\approx Ke^{-r\left(T-t\right)} \forall t \\
       P\left(S,t\right) &= 0 \forall t \text{ as } S\rightarrow \infty \\
       P\left(S,T\right) &= \max\left\{K-S,0\right\}
+    \label{boundaryConditionsPut}
   \end{align}
 
-For non-dividend-paying European Call Options, the closed form solution to \ref{eq:BSE} is:
+\subsection{Closed Form Solution}
+A closed form solution exists for European Call and Put options. The closed form solution for a European Call Option is:
 \begin{equation}
-  C(S,t) = SN(d_1) - Xe^{-r(T-t)}N(d_2)
+  C(S,t) = S\Phi(d_1) - Ke^{-r(T-t)}\Phi(d_2)
 \end{equation}
-and for a put it is:
+and for a put option it is:
 \begin{equation}
-    P(S,t) = Xe^{-r(T-t)}N(-d_2) - SN(-d_1)
+    P(S,t) = Xe^{-r(T-t)}\Phi(-d_2) - S\Phi(-d_1)
 \end{equation}
 where:
-  \begin{align}
-    d_1 &= \frac{\log(S/X) + (r - 0.5 \sigma^2)(T-t)}{\sigma \sqrt{T-t}}
-    d_2 &= \frac{\log(S/X) + (r+ 0.5 \sigma^2)(T-t)} {\sigma \sqrt{T-t}}
-  \end{align}
+\begin{equation}
+    d_1 = \frac{\log(S/X) + (r + 0.5 \sigma^2)(T-t)}{\sigma \sqrt{T-t}}
+\end{equation}
+\begin{equation}
+    d_2 = d_1 - \sigma \sqrt{T - t}
+\end{equation}
+and $\Phi(\cdot)$ denotes the cumulative distribution function of the standard normal distribution.
+This formula will be used throughout as a benchmark when comparing
+the accuracy of the explicit solution (\ref{sec:explicit}) and Monte Carlo \ref{sec:monteCarlo}
+
+
 
 \section{The greeks}
 To quantify different aspects of risk in an option position, the term the Greeks is used. 
@@ -220,7 +340,7 @@ The theta ($\Theta$) of an option measures the sensitivity of the option to the 
      \label{eq:theta}
 \end{equation}
 The negative sign in \ref{eq:theta} indicates that, all else equal, an option loses value as it approaches maturity. This arises from reduced uncertainty and, therefore, a diminishing value of optionality. As seen in \ref{fig:theta_greeks}, time decay is not linear, and it accelerates as time to expiration approaches. 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \input{tikz/Theta.tex}
     \caption{The Theta of European Options. }
@@ -233,7 +353,7 @@ The gamma $\Gamma$ of an option measures the rate of change in delta with respec
     \Gamma =\frac{\partial^2 V}{\partial S^2}
 \end{equation}
 Gamma is particularly important for delta hedging, as it quantifies how often a portfolio needs to be rebalanced to remain delta-neutral. A large Gamma indicates that very frequent rebalancing is needed, while a low Gamma indicates the opposite. 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \input{tikz/Gamma.tex}
     \caption{Gamma of European options.}
@@ -241,7 +361,22 @@ Gamma is particularly important for delta hedging, as it quantifies how often a 
 \end{figure}
 Figure \ref{fig:gamma_greek} shows that Gamma peaks around the Strike price where the option transitions between in the money and out of the money. As it moves further away from the strike, gamma approaches zero, indicating that delta is constant. 
 
-These sensitivities appear directly in the Black-Scholes equation and the BSE can be written as:
+
+\subsection{Rho}
+Rho denoted as $\rho$ is the sensitivity of an options value to interest rates \cite{wilmott2007paul}. The formula is:
+\begin{equation}
+  \rho = \frac{\partial V}{\partial r}
+\end{equation}
+\begin{figure}[H]
+    \centering
+    \input{tikz/Rho.tex}
+    \caption{Rho of European call and put options.}
+    \label{fig:rho_greek}
+\end{figure}
+
+It is important to note that although the graphs for Rho \ref{fig:rho_greek}and Delta \ref{fig:delta_greek} look similar despite representing different sensitivities. This is beacause both quantities tend to increase as the option moves from out of the money to in the money. EXPLAIN FURTHER.
+
+The sensitivities, $\Theta$, $\Gamma$ and $\Delta$ appear directly in the Black-Scholes equation and the BSE can be written as:
 \begin{equation}
     \Theta
 + \frac{1}{2}\sigma^2 S^2 \Gamma
@@ -252,74 +387,371 @@ These sensitivities appear directly in the Black-Scholes equation and the BSE ca
 highlighting the fundamental role of the Greeks in option pricing dynamics.
 
 \subsection{Implied Volatility}
-Within the BSE \ref{eq:BSE}, there is one parameter which cannot be directly observed, known as implied volatility $\sigma$. The implied volatility is the value of $\sigma$, which, when input into the equation \ref{eq:BSE}, produces a price equal to the ... price WORK ON THIS. 
+Within the Black-Scholes equation \ref{eq:BSE}, volatility $\sigma$ is the only parameter that is not directly observable in the market. Instead, it is inferred from the observed market price of an option and is therefore referred to as the \textit{implied volatility}. More precisely, the implied volatility is the value of $\sigma$ that, when substituted into the Black-Scholes pricing formula, produces a theoretical option value equal to the market price of the option.
+
+If $V_{\text{mkt}}$ denotes the observed market price, then the implied volatility $\sigma_{\text{imp}}$ is defined implicitly by
+\begin{equation}
+V_{\text{BS}}\left(S,K,r,T,t,\sigma_{\text{imp}}\right) = V_{\text{mkt}}.
+\end{equation}
+Since this equation cannot, in general, be rearranged algebraically to solve for $\sigma_{\text{imp}}$, numerical root-finding methods are used for the case of the paper the BrentQ \cite{scipy_brentq} function will be used. Implied volatility is widely used in practice because it provides a market-based measure of the uncertainty or expected variability of the underlying asset over the life of the option.
 
 
 
-\section{Finite Difference method for the BSE}
+\section{Finite Difference Method for the BSE}
+Finite difference methods are used to approximate solutions to PDEs. This is done by replacing derivatives with finite difference approximations \cite{alma991006173869708046} and then discretising the time and asset-price domains into a grid \cite{alma991008827533008046}.
 
-\subsection{Explicit}
+The time domain is discretised into $M$ steps using
+\begin{equation}
+  \Delta t = \frac{T}{M}.
+\end{equation}
+The stock-price domain is discretised into $N$ steps using
+\begin{equation}
+  \Delta S = \frac{S_{\max}}{N}.
+\end{equation}
+The result is an $N \times M$ grid, where each grid point represents the value of the option at time $t$ and stock price $S$, denoted by $V(S,t)$. The grid is illustrated in Figure~\ref{fig:explicit_stencil}.
+\begin{figure}[H]
+\centering
+\input{tikz/grid.tex}
+\caption{Stencil for the explicit finite difference method. The unknown value $V_i^k$ is computed from the known values $V_{i-1}^{k+1}$, $V_i^{k+1}$, and $V_{i+1}^{k+1}$.}
+\label{fig:explicit_stencil}
+\end{figure}
+The explicit scheme is forward in time: the value of the option at the next time level depends on the value of the option at the current time level \cite{alma991008708403508046}.
 
+
+
+\subsection{Explicit}\label{sec:explicit}
+
+The explicit finite difference scheme is obtained by approximating the time derivative with a backward difference and the spatial derivatives with centred differences. Starting from the Black--Scholes equation,
 \begin{equation}
     \frac{\partial V}{\partial t}
-+ \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}}
-+ r S \frac{\partial V}{\partial S}
-- r V = 0
+    + \frac{1}{2}\sigma^{2} S^{2} \frac{\partial^{2} V}{\partial S^{2}}
+    + r S \frac{\partial V}{\partial S}
+    - r V = 0,
 \end{equation}
-
-$\frac{\partial V}{\partial t}$ rate of change of option value with respect to time: 
+we use the approximations
 \begin{equation}
-\frac{V_{i,k} - V_{i,k+1}}{\Delta t}
-\end{equation}
-
-$\frac{\partial^{2} V}{\partial S^{2}}$ second derivative with respect to stock price:
-\begin{equation}
-\frac{V_i+1,_k - 2V_i,_k  + V_i-1_,k}{\Delta S^2}
-\end{equation}
-
-
-
-$\frac{\partial V}{\partial S}$ Delta first derivative with respect to stock price:
-\begin{equation}
-\frac{V_{i+1,k} - V_{i-1,k}}{2\Delta S}
-\end{equation}
-
-- Starting with the BSE, substitute in the derivatives
-
-\begin{equation}
-  \frac{V_{i,k} - V_{i,k+1}}{\Delta t} + \frac{1}{2} \sigma^2 S_i^2 \frac{V_i+1,_k - 2V_i,_k  + V_i-1_,k}{\Delta S^2} + rS_i \frac{V_{i+1,k} - V_{i-1,k}}{2\Delta S} - rV_{i,k} = 0
-\end{equation}
-
-Move the first derivative to the lhs to solve for $V_{i,k}$
-\begin{equation}
-V_{i,k}  = V_{i,k+1} +  \Delta t + \frac{1}{2} \sigma^2 S_i^2 \frac{V_{i+1,k+1} - 2V{_i,_{k+1}}  + V_{i-1_,k+1}}{\Delta S^2} + rS_i \frac{V_{i+1,k+1} - V_{i-1,k+1}}{2\Delta S} - rV_{i,k+1}
-\end{equation}
-
-Collect the coefficients:
-\begin{equation}
-  V_{s,t} = A_t V_{s+1,t-1} + B_t V_{s+1, t} + C_t V_{s+1,t+1}
-\end{equation}
-
-
-where:
-\begin{equation}
-A_t = \frac{1}{2} \Delta t \left(\sigma^2 i^2 - r i\right)
+\frac{\partial V}{\partial t} \approx \frac{V_i^k - V_i^{k+1}}{\Delta t},
 \end{equation}
 \begin{equation}
-B_t = 1 - \Delta t \left(\sigma^2 i^2 + r\right)
+\frac{\partial V}{\partial S} \approx \frac{V_{i+1}^{k+1} - V_{i-1}^{k+1}}{2\Delta S},
 \end{equation}
 \begin{equation}
-C_t = \frac{1}{2} \Delta t \left(\sigma^2 i^2 + r i\right)
+\frac{\partial^{2} V}{\partial S^{2}} \approx \frac{V_{i+1}^{k+1} - 2V_i^{k+1} + V_{i-1}^{k+1}}{\Delta S^2}.
+\end{equation}
+Substituting these into the BSE gives
+\begin{equation}
+  \frac{V_i^k - V_i^{k+1}}{\Delta t}
+  + \frac{1}{2} \sigma^2 S_i^2 \frac{V_{i+1}^{k+1} - 2V_i^{k+1} + V_{i-1}^{k+1}}{\Delta S^2}
+  + rS_i \frac{V_{i+1}^{k+1} - V_{i-1}^{k+1}}{2\Delta S}
+  - rV_i^{k+1} = 0.
+\end{equation}
+Rearranging yields the explicit update formula
+\begin{equation}
+  V_i^k = A_i V_{i-1}^{k+1} + B_i V_i^{k+1} + C_i V_{i+1}^{k+1},
+  \label{eq:exp}
+\end{equation}
+where, using $S_i = i\Delta S$,
+\begin{equation}
+A_i = \frac{1}{2} \Delta t \left(\sigma^2 i^2 - r i\right),
+\end{equation}
+\begin{equation}
+B_i = 1 - \Delta t \left(\sigma^2 i^2 + r\right),
+\end{equation}
+\begin{equation}
+C_i = \frac{1}{2} \Delta t \left(\sigma^2 i^2 + r i\right).
+\end{equation}
+The option price today is $V_{S, 0}$ where $S$ corresponds to the current stock price. 
+
+The explicit scheme can then be used to price an option. In the example below, the option parameters are $S_0 = 200$, $r = 0.0375$, $K = 210$, $\sigma = 0.15$, and $T = 0.5$. The resulting option value surface is shown in Figure~\ref{fig:explicit_surface}. One advantage of solving the PDE numerically is it yields the option value over the entire stock-price and time grid, rather than only at a single point.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/optionPlot_final.png}
+    \caption{Option value surface produced by the explicit finite difference method.}
+    \label{fig:explicit_surface}
+\end{figure}
+
+
+One limitation of the explicit finite difference method (FDM) for solving the PDE is that it is only conditionally stable. Although the scheme is straightforward to implement, its stability and accuracy depend on satisfying a time-step restriction of the form
+\begin{equation}
+ \Delta t \leq \frac{(\Delta S)^2}{\sigma^2}.
+\end{equation}
+
+In addition, discretising the PDE introduces truncation error, which measures the discrepancy between the continuous PDE and its finite difference approximation. For the explicit scheme, the local truncation error is
+\begin{equation}
+  O\left(\Delta t + \Delta S^2\right),
+\end{equation}
+indicating first-order accuracy in time and second-order accuracy in space.
+
+
+As shown in figure~\ref{fig:spatial_relative_error}, as the spatial step size $\Delta S$ decreases the size of the grid increases. This increases accuracy.
+
+\begin{figure}[H]
+    \centering
+    \input{tikz/SpatialVsRelativeError.tex}
+    \caption{Left: comparison of the explicit FDM price with the analytical Black--Scholes price ($14.273$) for each spatial step. Right: the corresponding relative error.}
+    \label{fig:spatial_relative_error}
+\end{figure}
+
+Consequently, improving accuracy by refining the grid can become computationally expensive, as shown in Figure~\ref{fig:example_image}.
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fdmTimeTaken.tex}
+  \caption{Computation time of the explicit finite difference method as the grid is refined.}
+  \label{fig:example_image}
+\end{figure}
+
+However, several avenues exist in order to speed up the computational speed required to solve the equation which will be explored in INSERT SECTION AND INSERT SECTION.
+On the other hand more accurate solutions to the pde exist such as Crank Nicolson \cite{alma991008540855508046} and Alternate Direction Implicit \cite{fjelland2012thesis}. 
+
+\section{Down and Out}
+The explicit solution presented in \ref{eq:exp} can be extended to barrier options. Here we consider a down-and-out European call option with barrier level $H$, where the option is immediately knocked out if the asset price falls to or below the barrier. The key changes are in the boundary conditions and payoff functions below:
+\begin{equation}
+V\left(S,t\right) =
+\begin{cases}
+0, & S \leq H, \; 0 \leq t \leq T, \\
+\max\left(S-K,0\right), & t = T, \; S > H, \\
+\end{cases}
 \end{equation}
 
 
+\begin{equation}
+V\left(S,T\right) = S - Ke^{-r\left(T-t\right)},  S \to \infty.
+\end{equation}
+https://link-springer-com.qub.idm.oclc.org/book/10.1007/978-3-031-28378-9
+A down-and-out call is typically less expensive than a vanilla European call because the barrier introduces an additional condition under which the option becomes worthless prior to maturity.
+This feature can be beneficial when a lower initial premium is desired. Moreover, as the barrier is placed further away from the asset price path, the probability that the underlying breaches the barrier decreases.
+Consequently, the effect of the barrier diminishes, and the down-and-out call price approaches the price of the corresponding European call.
+
+\section{Explicit Solver Python Implementation}
+The explicit solver used to generate Figure~\ref{fig:explicit_surface} was implemented in Python. 
+Python was a suitable choice for this stage of the project because it provides strong support for scientific computing through \textit{NumPy} and \textit{SciPy},
+ together with straightforward visualisation through \textit{Matplotlib}.
+
+At a high level, the implementation proceeds as follows:
+\begin{enumerate}
+  \item Initialise a two-dimensional grid representing the option value over stock price and time.
+  \item Apply the terminal and boundary conditions corresponding to the option type.
+  \item Precompute the coefficients of the explicit finite difference scheme.
+  \item Step backwards through time, updating each interior grid point using the explicit update rule.
+\end{enumerate}
+The overall structure of the solver can be summarised as follows:
+\begin{verbatim}
+Initialise grid using the supplied model parameters
+Apply terminal and boundary conditions
+Compute coefficients a[i], b[i], and c[i]
+for n in reversed(time_steps):
+    for i in range(1, M):
+        V[n, i] = a[i] * V[n+1, i-1]
+                + b[i] * V[n+1, i]
+                + c[i] * V[n+1, i+1]
+\end{verbatim}
+
+A full implementation is provided in INSERT REFERENCE.
+
+\subsection{Optimisation \& Benchmarking}
+The initial implementation serves as a baseline, as it relies only on arrays and standard NumPy operations. 
+Before moving to GPU acceleration, the Python implementation can be improved using the \textit{Numba} library. 
+Numba provides a just-in-time (JIT) compiler through the \texttt{@jit} decorator, which translates Python functions into highly optimised machine code at run time.
+
+Because the baseline implementation is dominated by NumPy array operations, 
+it is a natural candidate for Numba acceleration.
+Although NumPy is implemented in C, repeated calls from Python still incur interpreter overhead. 
+Numba reduces this overhead by compiling the relevant numerical code directly, allowing the solver to achieve performance closer to that of low-level languages such as C.
+
+By simply adding the \texttt{@jit} decorator, a considerable speedup can be observed. Speedup is measured using
+\begin{equation}
+  \text{speedup} = \frac{t_{\text{baseline}}}{t_{\text{Numba}}}
+\end{equation}
+For benchmarking purposes, the option priced is a European Call Option with stock price $S_0 = \$274.80$, strike price $K = \$275.00$, time to expiry $T = 0.0548$, volatility $\sigma = 0.1730$, and risk-free rate $r = 0.0375$.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{||c c c c||}
+ \hline
+ Spatial Step & CPU (ms) & Numba (ms) & Speed-up  \\ [0.5ex]
+ \hline\hline
+ 3     & 28,585 & 2056 & 13.903 \\
+ \hline
+ 1.5   & 53,345 & 681 & 78.33 \\
+ \hline
+ 0.75  & 116,519 & 569 & 204.778  \\
+ \hline
+ 0.375 & 273,270 & 1139 & 239.9 \\
+ \hline
+\end{tabular}
+\caption{Runtime comparison between the pure Python and Numba implementations of the explicit finite difference solver.}
+\label{tab:numba-benchmark}
+\end{table}
+\begin{figure}[H]
+  \centering
+  \makebox[\textwidth][c]{\input{tikz/spatialVsTime.tex}}
+  \caption{Computation time of the explicit finite difference method as the grid is refined.}
+  \label{fig:NumbaBenchmark}
+\end{figure}
+Table \ref{tab:numba-benchmark} shows that the Numba implementation significantly outperforms the pure Python baseline. As the grid is refined the computational cost for both implementations significantly increases. However, the Python implementation scales much less efficiently as the nested loop updates incure significant overhead. In contrast, Numba compiles these loops to efficient machine code, leading to much lower runtimes with a 239.9x speed up when $\Delta S=0.375$. The slight increase in between $\Delta S = 0.75$ and $\Delta S = 0.375$ can be attributed to the larger grid exceeding the CPU cache capacity.
 
 
-The option price today is $V_{s, 0}$ where $s$ corresponds to the current stock price
+\section{Monte Carlo}\label{sec:monteCarlo}
+Another option Pricing Methodology derived from the GBM is Monte Carlo simulations. The terminal asset price may be simulated as
+\begin{equation}
+    S_T = S_0 \exp\left(\left(r-\frac{1}{2}\sigma^2\right)\Delta t + \sigma\sqrt{\Delta t}\,Z\right),
+\end{equation}
+where $\Delta t = T-t$ and $Z \sim \mathcal{N}(0,1)$.
 
+
+Hence, the Monte Carlo estimator for a European call option based on $N$ simulated paths is
+\begin{equation}
+    C(S,t) \approx e^{-r\Delta t} \frac{1}{N} \sum_{i=1}^{N} \max(S_T^{(i)}-K,0).
+\end{equation}
+
+The accuracy of the Monte Carlo method improves as the number of simulated paths increases, but its convergence rate is relatively slow, with standard error proportional to $N^{-1/2}$. 
+Consequently, obtaining highly accurate prices may require millions of simulations, so improved accuracy comes at a significant computational cost.
+
+\subsection{Benchmarking}
+To illustrate this cost, a European call option is priced while varying the number of simulated paths. For this benchmark, the parameters are fixed at $S_0 = 274.80$, $K = 275.00$, $r = 0.0375$, and $T = 1$ year, with the remaining model parameters held constant.
+\begin{center}
+\begin{tabular}{||c c c ||} 
+ \hline
+ Number of Paths & Power of 2 & CPU Time Taken (ms)\\ [0.5ex] 
+ \hline\hline
+ 65,536     & $2^{16}$ & 3.031  \\ 
+ \hline
+ 262,144    & $2^{18}$ & 11.972   \\
+ \hline
+ 1,048,576  & $2^{20}$ & 50.223  \\
+ \hline
+ 4,194,304  & $2^{22}$ & 196.632  \\
+ \hline
+ 16,777,216 & $2^{24}$ & 836.003 \\ 
+ \hline
+ 33,554,432 & $2^{25}$ & 2006.624  \\ 
+ \hline
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+  \centering
+  \makebox[\textwidth][c]{\input{tikz/cpuTimeTakenMC.tex}}
+  \caption{CPU runtime of the Monte Carlo pricer as the number of simulated paths increases.}
+  \label{fig:MCcpuBenchmark}
+\end{figure}
+
+As shown in Figure~\ref{fig:MCcpuBenchmark}, the CPU runtime increases rapidly as the number of simulated paths grows. Increasing the path count from $2^{16}$ to $2^{25}$ raises the runtime from $3.031$ ms to $2006.624$ ms. 
+This demonstrates that, although Monte Carlo methods are simple and flexible, achieving higher accuracy on the CPU alone quickly becomes computationally expensive. Since each simulated path is independent, Monte Carlo methods are highly parallelisable and therefore well suited to GPU acceleration.
 
 \section{Application of GPUS}
+Graphics Processing Units (GPUS),
+
+Although the GPU was originally developed for graphics processing excelling at
+three dimensional graphis rendering. The GPU has since evolved to be a powerful
+programmable processor. 
+
+The GPU is designed for a specific set of applications following
+a specific set of requirements. This includes, large computational requirements
+substantial parallelism, and cases were throughput is more important than latency.\cite{Owens2008GraphicsPU}
+
+The reason that GPUs have a significant performance gap between CPUs lies in
+the architecture.  
+Throughput vs Latency, 
+CUDA was developed by NVIDIA, to allow NVIDIA GPUS to be programmed for more general
+purposes while using languages such as C/C++. A CUDA program ecompases both code which
+runs on the CPU known as the host, with little parallel process. The device refers to the
+GPU, were the main parallel process are implemented. 
+The system of CUDA works with a host which refers to the CPU
+and the device which refers to the GPU.
+Data parallelism refers to the ability of a program were many arithmetic operations
+can be performed at the same time. 
+
+
+CUDA has a wide range of libraries avialable for use within CUDA. The main libraries
+used in the context of this project were:
+Libraries used:
+Thrust
+CuRand
+\subsection{Motivation for GPU Acceleration}
+
+\subsection{Monte Carlo GPU Implementation}
+Monte Carlo pricing is well suited to GPU acceleration because each simulation path can be evaluated independently. 
+Since the accuracy of the method improves as the number of paths increases, a large number of independent path evaluations is required.
+ This makes Monte Carlo an embarrassingly parallel workload, allowing thousands of GPU threads to execute concurrently under CUDA's SIMT execution model.
+
+The Monte Carlo implementation was written in CUDA. 
+Two device vectors are allocated using the Thrust library: one stores the Gaussian random numbers used to generate terminal asset prices,
+and the other stores the discounted payoff for each simulated path. Once the kernel has completed,
+the payoffs are summed using \texttt{thrust::reduce}, and the result is divided by the total number of paths to obtain the Monte Carlo estimator.
+
+Within the kernel, each thread first computes its global path index:
+\begin{verbatim}
+const unsigned pathIdx = blockIdx.x * blockDim.x + threadIdx.x;
+\end{verbatim}
+This gives every thread a unique starting index. The total number of threads launched in the grid is then computed as
+\begin{verbatim}
+const unsigned stride = blockDim.x * gridDim.x;
+\end{verbatim}
+A grid-stride loop is used so that the implementation remains flexible when the number of simulated paths exceeds the number of available threads:
+\begin{verbatim}
+for (path = pathIdx; path < numOfPaths; path += stride) {
+    ...
+}
+\end{verbatim}
+This means that each thread begins at its own unique path index, 
+processes that path, and then advances by the total number of threads in the grid. 
+As a result, each thread may evaluate one or more simulation paths.
+
+For each assigned path, the thread computes the terminal stock price using the risk-neutral geometric Brownian motion model introduced earlier,
+ applies the payoff function, discounts the payoff back to the present time, and stores the result in device memory.
+
+In the experiments, a block size of 256 threads was used. The number of blocks required is therefore computed as
+\begin{equation}
+    \text{grid size} = \left\lceil \frac{\text{number of paths}}{256} \right\rceil.
+\end{equation}
+This ensures that enough threads are launched to cover all simulation paths while still allowing the grid-stride loop to handle larger workloads efficiently.
+
+\subsection{Why the Explicit Solver Can Also Benefit}
+\subsection{Benchmark Setup}
+\subsection{Performance Metrics}
+
+\section{Design}
+The design process of my application followed the workflow shown in Figure~\ref{fig:design_process}. The first stage, \textit{Plan on Paper}, involved designing the solution on paper. This included solving equations by hand, such as the explicit solution to the BSE in \ref{eq:exp}, discretising the GBM, and planning the overall code implementation.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/design_process.png}
+    \caption{Design process}
+    \label{fig:design_process}
+\end{figure}
+
+Once the plan had reached an acceptable stage, the next step was to use Jupyter notebooks and Google Colab for rapid prototyping and validation of results. This made it easy to test different implementations and libraries without extensive setup. The stochastic component of the code made it hard to test certain code components which ruled out using methodologies like TDD INSERT REFERENCE, TESTING IS DISUCSSED IN INSERT SECTION. The use of Juptyer notebooks meant I was able to verify visually that my results where accurate.
+I refined the code to ensure it was both accurate and functional before moving to the \textit{Python Code Stage}. This stage involved transferring the code from the Jupyter notebook into the project folder and improving an already working implementation. It also provided the benefit of version control. Since a main goal of the project is to measure the efficiency and speed of the code, it was important to optimise it carefully. At this stage, tests were also introduced to ensure that no regressions were introduced. It also became easier to generate plots, since they could be exported as \textit{tex} files and imported directly into the dissertation.
+
+Once the Python implementation was complete, I moved on to CUDA. Although the Python code could not be translated directly into CUDA, understanding the implementation in Python made it easier to develop the CUDA version. The CUDA code was then continually optimised to improve performance. Once the code had reached an acceptable stage, it was benchmarked and the results were plotted in Python.
+
+\chapter{Implementation}
+
+The implementation of this section can be split into two distinct sections
+The inital CPU implementation written in Python and tested in pytest
+and the CUDA implementation written in C++ and tested in ...
+\section{Testing}
+Although there is a stochastic component to the code written which makes it hard to test as the output isn't deterministic.
+
+Testing can be split into two components
+- For testing the stoch part I used jupyter notebooks. to visually veirfy the result. 
+- I wrote unit tests for the solver in pytest
+\section{System Evaluation and Experimental Results}
+
+
+
 For benchmarking purposes, the options being priced are as follows
+\begin{center}
+\begin{tabular}{||c c c c c||} 
+ \hline
+  $\sigma$ & $r$ & $K$ & $S_t$ & $T$ \\ [0.5ex]
+ \hline\hline
+ 0.2 & 0.05 & 100 & 100 & 1.0 \\ 
+ \hline
+\end{tabular}
+\end{center}
+The option considered for benchmarking has volatility $\sigma = 0.2$ (20\%), a risk-free interest rate of $r = 0.05$ (5\%), current stock price $S_t = 100$, strike price $K = 100$, and time to maturity $T = 1.0$ year.
 
 \begin{center}
 \begin{tabular}{||c c ||} 
@@ -431,11 +863,888 @@ With grid a grid size of 50,000
 \end{align}
 
 \chapter{Extension to the Heston Model}
+The Heston model is a widely used nonlinear stochastic volatility model, 
+but in practice, its variance process is unobserved (latent)~\cite{heston2015}. 
+This makes inference a joint state- and parameter-estimation problem: given observed asset or option prices, we seek to recover both the 
+model parameters and the hidden volatility trajectory. 
+When the model is estimated from the asset price alone, inference 
+is typically carried out under the \textit{physical measure}; when option prices are used, the model is calibrated to match 
+market-implied expectations of future volatility~\cite{Cui2017}.
+In this work, we focus on the first estimation paradigm. 
+Reliable volatility estimates of the Heston model are required in 
+applications such as option pricing, hedging, and risk management 
+in quantitative finance~\cite{Als2012}.
+
+Several papers have addressed this estimation problem. 
+For example, in~\cite{WANG201714100} a recursive estimation method 
+is proposed by combining a consistency-enhanced extended Kalman filter
+with pseudo-maximum-likelihood estimation.
+There is a noticeable trend to cast the Heston model as a state 
+space model and use state estimation and filtering methods
+(e.g., Kalman filter, particle filter)%
+~\cite{BlancBlocquel2024,BaoFengZhang2025,Gruszka2022,Li2013}.
+For example,~\cite{Gruszka2022} proposes an algorithm 
+which alternates between filtering the latent volatility,
+using fixed parameter values, and then updating the model parameters
+by Bayesian regression conditional on that filtered volatility.
+
+Bayesian estimation is particularly appealing for the Heston model 
+because it allows prior information about the parameters and latent 
+volatility to be incorporated directly into the inference problem. 
+More importantly, it yields a posterior joint distribution over 
+parameters and hidden states, rather than only point estimates (as in maximum 
+likelihood estimation), 
+thereby quantifying uncertainty and model credibility.
+Moreover, Bayesian methods produce estimates of the posterior 
+uncertainty on model parameters and hidden states, which is 
+important in quantitative finance as it can affect option/derivative 
+pricing, risk management, and hedging decisions 
+~\cite{GuillaumeSchoutens2012}.
+
+Few works perform a Bayesian estimation of the model parameters 
+and latent variables simultaneously 
+(see, for instance,~\cite{FruhwirthSchnatter2008}), 
+as this problem comes with significant challenges in terms of 
+identifiability, numerical stability, and computational cost. 
+In particular, careful tuning of prior distributions, 
+consideration of possible reparametrizations, and the imposition 
+of structural constraints, such as the Feller condition, may be required. 
+This process can be highly time-consuming.
+
+% 5. Our approach and contributions
+We approach Heston estimation as a Bayesian inference problem
+for a nonlinear state-space system, with both the latent volatility
+path and the model parameters inferred jointly from observed data.
+Since this inference problem is sensitive to the choice of priors,
+reparametrizations, and numerical constraints, we define a composite
+score that combines fit to the observed data with posterior and MCMC
+diagnostics, including convergence, effective sampling, and posterior
+shape (gauging multimodality and ridge-like geometries);
+see Section~\ref{sec:mcmc_evaluation}. 
+Next, we use OpenEvolve~\cite{openevolve}, an open-source framework 
+inspired by AlphaEvolve~\cite{AlphaEvolve2025} that improves code through
+LLM-generated edits, evolutionary search, and execution-based scoring,
+to evolve the choice of prior parameters and related hyperparameters. 
+Overall, our approach addresses a practical open problem in
+Heston estimation and provides a systematic tool for the modeller,
+reducing the effort needed for manual tuning
+while improving estimation quality.
+
+\textit{Notation.} 
+For a logical proposition $P$, its indicator function 
+is denoted by $1_P$. For a matrix $A\in\R^{n\times n}$, 
+its determinant is denoted by $|A|$. The cardinality of a 
+finite set $C$ is denoted $|C|$. With some abuse of notation,
+the pdf of a random variable $x$ is denoted by $p_x(x)$, or 
+just $p(x)$. Similarly, the conditional pdf of $x$ given $y$ 
+is $p_{x {}\mid{} y}(x {}\mid{} y)$, or $p(x {}\mid{} y)$.
+The symbol $\propto$ means ``proportional to''.
+
+\section{The Heston model}\label{sec:methodology}
+
+\subsection{Stochastic differential equation model}
+The Heston model~\cite{heston2015} is the following system of stochastic differential 
+equations which describes the price of an asset, $S_t$, along with 
+its volatility, $\sqrt{v_t}$
+\begin{subequations}
+\begin{align}
+\dd S_t ={}& \mu S_t \dd t + \sqrt{v_t}S_t \dd W_t^S,
+\label{eq:sde-1}
+\\
+\dd v_t  ={}& \kappa(\theta-v_t)\dd t + \xi \sqrt{v_t}\dd W_t^v,
+\label{eq:sde-2}
+\end{align}
+\end{subequations}
+where the first equation is a geometric Brownian motion with stochastic variance, 
+$v_t$. The second SDE is a CIR process, and $W^S$, $W^v$ are two different 
+Brownian motions, possibly correlated, with $\dd W^S_t \dd W^v_t = \rho \dd t,$
+for some correlation $\rho \in (-1, 1)$. 
+A notable property of the variance dynamics in~\eqref{eq:sde-2} is mean reversion;
+namely, $\E[v_t] = \theta + (v_0 - \theta)e^{-\kappa t}$, i.e., the expected variance 
+goes to $\theta$ at an exponential rate $\kappa$ as $t\to\infty$. 
+Next, we derive a discrete-time state-space approximation suitable for 
+Bayesian estimation of the parameters.
+
+\subsection{Discretization}
+We use the subscript $k\in\N$ to refer to the discrete versions of the above
+continuous-time quantities.
+Before we discretize, we apply It\^{o}'s lemma~\cite{oksendal2014stochastic} 
+with $g(s) = \ln s$, for which $g'(s) = 1/s$ and $g''(s) = -1/s^2$; let us define 
+$\Lambda_k = g(S_k)$. The application of the lemma gives 
+\begin{equation}
+\dd \Lambda_t = \left(\mu - \tfrac{1}{2} v_t\right)\dd t + \sqrt{v_t}\dd W_t^S.    
+\end{equation}
+In this way, upon discretisation, the original stock price,
+$S_k$, will remain positive since $S_k = \exp \Lambda_k$. 
+We can now discretise $\Lambda$ using the Euler method
+to obtain
+\begin{equation}
+    \Lambda_{k+1} 
+{}={} 
+    \Lambda_k 
+    + \left(\mu - \tfrac{1}{2}v_k\right)h 
+    + \sqrt{v_k h} Z_k^S,
+\label{eq:lambda-updates}
+\end{equation}
+with $Z_k^S \overset{\text{iid}}{\sim} \mathcal{N}(0, 1)$.
+More advanced discretisation schemes are proposed in the seminal 
+work of Andersen~\cite{Andersen2007}.
+
+We can apply the Milstein discretisation to the variance equation. 
+The vol-of-vol term is $\sigma(v) = \xi\sqrt{v}$, and 
+$\sigma'(v) = \nicefrac{\xi}{2\sqrt{v}}$, 
+so the Milstein discretisation is 
+\begin{equation}
+    v_{k+1} 
+{}={} 
+    v_k
+    + \kappa(\theta - v_k)h 
+    + \xi \sqrt{v_k h}Z_k^v 
+    + \tfrac{1}{4}\xi^2 h((Z_k^v)^2 - 1),
+    \label{eq:milstein-vol-updates}
+\end{equation}
+where $Z_k^v \overset{\text{iid}}{\sim} \mathcal{N}(0, 1)$
+and $\operatorname{cov}(Z_k^S, Z_k^v) = \rho$.
+To guarantee the nonnegativity of $v_k$ without introducing a nonsmooth 
+function to the model (e.g, $[v]_+ = \max\{0, v\}$), we introduce the 
+following smooth approximation of $[v]_+$:
+\begin{equation}
+    (v)_{a, +} = a^{-1} \left( [av]_+ + \ln\left(1 + e^{-a|v|}\right) \right),
+\end{equation}
+with parameter $a > 0$.
+We then apply $({}\cdot{})_{a, +}$ to the  $v$-updates of 
+~\eqref{eq:milstein-vol-updates}.
+
+
+
+As seen in~\eqref{eq:lambda-updates} and~\eqref{eq:milstein-vol-updates},
+the discretised Heston model is a nonlinear state space model with state 
+$x_k = (\Lambda_k, v_k)$. 
+In practice, only the log-price is observed, while $v_k$
+is latent, so the output equation is $y_k = \Lambda_k + n_k$,
+where $n_k$ is a measurement noise term, which accounts for market 
+microstructure effects and imprecisely recorded prices~\cite{KanayaKristensen2015}; we assume that 
+$n_k \overset{\text{iid}}{\sim} \mathcal{N}(0, \sigma_n^2)$, 
+for some known $r>0$.
+The process noise is the vector $Z_k = (Z_k^S, Z_k^v)$. 
+Note that we can introduce the change of variables
+\begin{equation}
+    Z_k = \left[\begin{smallmatrix}
+    1 & 0 \\ \rho & \sqrt{1 - \rho^2}
+\end{smallmatrix}\right]w_k,
+\end{equation}
+where $w_k \sim \mathcal{N}(0, I)$.
+Hereafter, we shall treat $w_k$ as the process noise term.
+The unknown constant parameters can be packed in a vector 
+$\eta=(\mu, \kappa, \theta, \xi, \rho)$.
+Overall, we have a discrete-time model of the form
+\begin{subequations}
+    \begin{align}
+        x_{k+1} {}={}& f(x_k, w_k; \eta),
+        \label{eq:ss:x}
+        \\
+        y_k {}={}& [1 ~ 0]x_k + n_k.
+        \label{eq:ss:y}
+    \end{align}
+\end{subequations}
+Given observations $y_0, \ldots, y_{N-1}$
+the objective is to estimate the parameter vector $\eta$, 
+the full states $x_0, \ldots, x_{N}$, 
+and the realizations of the process noise, $w_0, \ldots, w_{N-1}$.
+To this end, we follow a Bayesian estimation approach,
+which is introduced in the following section.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.99\linewidth]{figures/heston.png}
+    \caption{Simulation of a Heston model (200 paths) with 
+    $S_0 = 1$,
+    $v_0 = 0.09$, 
+    $\theta=0.04$,
+    $\mu=0.02$, 
+    $\kappa = 2$, 
+    $\xi=0.3$, 
+    $\rho = 0$,
+    and $h=2\cdot 10^{-4}$.
+    (Top) Stock price, $S_k$, in log scale, 
+    (Bottom) Variance, $v_k$, and the long-run mean variance, $\theta$.}
+    \label{fig:placeholder}
+\end{figure}
+
+\section{Estimation}\label{sec:estimation}
+
+In this section, we describe a Bayesian framework for the 
+estimation of the parameters and hidden states of the 
+Heston model from output data.
+We then introduce score functions that describe the quality 
+of the estimated model; these are then used to drive 
+an evolutionary improvement of the estimated model.
+
+
+\subsection{Bayesian parameter and state estimation}
+Hereafter we use the notation $x_{0:N}=(x_0, \ldots, x_N)$.
+By Bayes' theorem,
+\begin{align}
+    &p(x_{0:N}, w_{0:N-1}, \eta | y_{0:N-1})
+    \notag\\
+    &\quad{}\propto{}
+    p(y_{0:N-1} | x_{0:N}, w_{0:N-1}, \eta)
+    p(x_{0:N}, w_{0:N-1}, \eta).
+\end{align}
+Under the assumption that $x_0$ and $w_{0:N-1}$ are mutually independent,
+$p(x_0, w_{0:N-1}) = p(x_0) \prod_{k=0}^{N-1} p(w_k)$ and taking 
+into account~\eqref{eq:ss:x}, the joint prior can be written formally as
+\begin{multline}
+    p(x_{0:N}, w_{0:N-1}, \eta)
+    \\[-0.2em]
+    = p(x_0)p(\eta) 
+    \prod_{k=0}^{N-1} 
+    p(w_k)\delta(x_{k+1} {-} f(x_k, w_k; \eta)),
+\end{multline}
+where $\delta$ is the Dirac delta.
+Next, by~\eqref{eq:ss:y},
+\begin{align}
+    &p(y_{0:N-1} | x_{0:N}, w_{0:N-1}, \eta)
+    \notag
+    \\
+    &\hspace{3em}{}={}
+    \prod_{k=0}^{N-1} p(y_k | x_k, \eta) 
+    {}={} \prod_{k=0}^{N-1} p_n(y_k - [1 ~ 0]x_k)
+    \notag
+    \\
+    &\hspace{3em}{}\propto{} \prod_{k=0}^{N-1} 
+        \exp\left(-\frac{(y_k - \Lambda_k)^2}{2\sigma_n^2}\right).
+\end{align}
+Having determined $p(x_{0:N}, w_{0:N-1}, \eta | y_{0:N-1})$,
+we can marginalize to determine $p(\eta | y_{0:N-1})$.
+To this end, posterior inference is carried out using 
+Markov chain Monte Carlo (MCMC)~\cite{Brooks2011}.
+MCMC generates samples from a Markov chain whose stationary distribution 
+is the target posterior, $p(x_{0:N}, w_{0:N-1}, \eta | y_{0:N-1})$.
+The designer selects priors for the parameters, $\eta$.
+
+
+A satisfactory fit should yield a posterior that is numerically and 
+statistically well behaved: we favour posterior marginals that are 
+reasonably regular and, ideally, unimodal, since strong multimodality, 
+ridges, and funnel-like geometries often indicate \textit{weak identifiability}
+(cf. Fig.~\ref{fig:posterior-geometries}), 
+which calls for either reconsidering the priors or reparametrization 
+of the model.
+\input{tikz/posteriors_good_bad.tex}
+
+\subsection{Evaluation of MCMC estimation}\label{sec:mcmc_evaluation}
+
+In this section, we shall introduce a series of 
+\textit{score functions} that define the quality of an estimated 
+posterior distribution.
+
+
+\textit{Modality.} 
+To gauge the unimodality or bimodality of a univariate empirical 
+distribution, its bimodality coefficient (BC)~\cite{Pfister2013}
+is sometimes used. BC is defined in terms of the skewness and kurtosis 
+of the distribution and a value $\leq\nicefrac{5}{9}$ is taken 
+to imply that the distribution is unimodal.
+This is a heuristic and Pfister \textit{et al.} in~\cite{Pfister2013}
+have pointed out the shortfalls of this criterion.
+For multivariate distributions, it is more challenging to 
+assess modality.
+
+
+Here we propose a \textit{unimodality score} for two-dimensional 
+empirical distributions. Suppose we have a distribution of 
+vectors $z^{(1)}, \ldots, z^{(N)} \in \R^2$. Firstly, we approximate 
+the empirical distribution by kernel density estimation with a 
+Gaussian kernel, that is,
+\begin{equation}
+    \widehat{p}(z) 
+    {}={} 
+    \tfrac{1}{N}
+    \sum_{i=1}^{N} 
+        |H|^{-\nicefrac{1}{2}}
+        k(H^{-\nicefrac{1}{2}} (z - z^{(i)})),
+\end{equation}
+where $k$ is the Gaussian kernel, and the symmetric positive 
+definite matrix $H \in \R^{2\times 2}$
+is determined using Scott's rule~\cite{Scott1992book}.
+Next, we define the superlevel sets of $\widehat{p}(z)$ as 
+\(
+    \operatorname{lev}_{\geq \gamma} \widehat{p} 
+    {}={}
+    \{z\in \R^2 {}:{} \widehat{p}(z)  \geq \gamma\},
+\)
+for $\gamma \leq \widehat{p}_{\max} \coloneqq \max \widehat{p}$.
+
+Next, we wish 
+(i) to tell whether each $\operatorname{lev}_{\geq \gamma} \widehat{p}$ is \textit{connected} 
+for $\gamma \in [\alpha \widehat{p}_{\max}, \widehat{p}_{\max}]$,
+(ii) to write each superlevel set as a union of connected components,
+\begin{equation}
+    \operatorname{lev}_{\geq \gamma} \widehat{p} = \bigcup_{\iota = 1}^{n_{\gamma}} C_{\iota, \gamma}.
+\end{equation}
+Since $\operatorname{lev}_{\geq \gamma} \widehat{p}$ does not admit a closed-form representation,
+we approximate each set $\operatorname{lev}_{\geq \gamma} \widehat{p}$ by a discrete set on a grid
+and reduce the problem of assessing connectedness of that discrete approximation 
+to the connectedness of the associated graph, $\mathcal{G}_\gamma = (V_\gamma, E_\gamma)$.
+Each vertex in $V_\gamma$ corresponds to a grid point, and a pair of 
+vertices are linked by an edge if the grid points are adjacent.
+Using connected-component labeling~\cite{HeXiwei2017} we determine the number of components; 
+each connected component corresponds to a distinct high-density region, 
+and multiple components at high levels provide evidence against unimodality.
+We set $\alpha = 0.7$ so that the analysis focuses on the high-density region 
+near the peak and is less sensitive to low-density tails and low-likelihood areas.
+Alongside, we compute the \textit{elongation} of each component $C_{\iota, \gamma}$, 
+which we define to be the square root of the condition number of the empirical 
+covariance matrix, that is,
+\begin{equation}
+    \operatorname{elong}(C_{\iota, \gamma}) = \sqrt{\kappa(\Sigma_{C_{\iota, \gamma}})},
+\end{equation}
+where $\kappa$ denotes the condition number, and 
+\begin{equation}
+    \Sigma_{C_{\iota, \gamma}}
+    {}={}
+    \tfrac{1}{|C_{\iota, \gamma}|}
+    \sum_{z_i \in C_{\iota, \gamma}} 
+        (z_i - \bar{z}_{C_{\iota, \gamma}})
+        (z_i - \bar{z}_{C_{\iota, \gamma}})^\intercal,
+\end{equation}
+where $\bar{z}_{C_{\iota, \gamma}}$ is the centroid of $C_{\iota, \gamma}$.
+
+\textit{Elongation penalty.}
+Elongations up to about 2--3 can be considered unremarkable. 
+Values in the range 3--10 would indicate substantial anisotropy,
+but are not necessarily problematic for posterior distributions. 
+Elongation larger than 10 may indicate a ridge-like or weakly 
+identifiable posterior geometry and is therefore penalised maximally.
+We, therefore, introduce the \textit{elongation penalty} of a 
+component $C$ to be 
+\begin{equation}
+    \ell_e(C) = \min\left(1, \max\left(0, \frac{\operatorname{elong(C)}-3}{7}\right)\right).
+\end{equation}
+Note that elongations at large values of $\alpha$ (closer to the 
+peak of the distribution) are more undesirable. Therefore,
+to define an overall elongation penalty, we take 
+an average weighted by $\gamma$. More specifically,
+we take slices of the distribution at levels $(\gamma_j)_{j=1}^{M}$
+and determine the \textit{overall elongation penalty} as 
+\begin{equation}
+    \ell_e = 
+        \dfrac{         
+            \sum_{j=1}^{M} \gamma_j \max_{\iota=1,\ldots, n_{\gamma_j}} \ell_e(C_{\iota, \gamma_j})}
+        {
+            \sum_{j=1}^{M} \gamma_j
+        }.
+\end{equation}
+
+\textit{Multimodality penalty.}
+Further, we define the multimodality penalty as 
+the weighted average of the number of components, 
+that is,
+\begin{equation}
+    \ell_m = \frac{
+        \sum_{j=1}^{M} \gamma_j (n_{\gamma_j} - 1)
+    }{
+        \sum_{j=1}^{M} \gamma_j 
+    }.
+\end{equation}
+
+
+\textit{Overall shape score.}
+We combine the elongation penalty, $\ell_e$, and the 
+multimodality penalty, $\ell_m$, to define an 
+overall shape score as the weighted geometric mean 
+\begin{equation}
+    s_s = (1-\ell_e)^{w_e}(1-\ell_m)^{w_m},
+\end{equation}
+with parameters $w_e, w_m \geq 0$ with $w_e + w_m = 1$.
+
+
+\textit{Convergence of MCMC.} The potential scale reduction factor,
+also known as $\widehat{R}$, is used to check if the MCMC has converged.
+Roughly speaking, $\widehat{R}$ compares the variance within each chain 
+with the variance between chains. Ideally, we want $\widehat{R} = 1$ 
+which indicates that all chains are sampling from the same 
+stable posterior distribution, while 
+values of $\widehat{R} \leq 1.01$ are acceptable, and 
+values $\geq 1.1$ imply the chains have not converged. 
+Vehtari \textit{et al.} recommend the critical value of 
+$\widehat{R}_c = 1.05$~\cite{Vehtari2021}.
+Here we introduce the score
+\begin{equation}
+    s_{\widehat{R}} = \frac{1}{1 + 25 (\widehat{R}-1)^{1.2}},
+\end{equation}
+where the effect of the exponent $1.2$ it to penalise 
+less strongly values of $\widehat{R}$ very close to $1$.
+
+\textit{Effective sampling.}
+In MCMC, the posterior distributions are estimated by samples
+produced by a Markov chain; therefore, they are correlated.
+The effective sample size (ESS) of an estimated parameter 
+quantifies the number of equivalent \textit{independent} samples.
+In particular, the \textit{bulk ESS} focuses on the 
+centre of the distribution, while \textit{tail ESS} focuses on 
+the tail~\cite{Vehtari2021}. 
+Let $\mathrm{ESS}_{\rm min}$ denote the minimum of the bulk and 
+tail ESSs across all posterior quantities.
+We define the effective sampling score 
+\begin{equation}
+    s_{\rm ess} = \frac{\mathrm{ESS}_{\rm min}}{\mathrm{ESS}_{\rm min} + 1000}.
+\end{equation} 
+
+
+
+\textit{Divergences.} Numerical divergences of the Hamiltonian 
+MC sampler are highly undesirable as they can hint towards a ``bad''
+(e.g., funnel-like) geometry, or a large step size of the solver.
+We penalize the number of divergences, $\mathrm{div}$, strongly
+by introducing the score 
+\begin{equation}
+    s_{\rm div} = \frac{1}{1+\mathrm{div}}.
+\end{equation}
+
+\textit{Posterior predictive score.}
+To assess posterior predictive performance, we consider the posterior predictive
+distribution
+\begin{multline}
+p(y_k \mid y_{0:N-1}^{\mathrm{meas}})
+=
+\int
+p(y_k \mid x_k,\eta)\\
+p(x_{0:N},w_{0:N-1},\eta \mid y_{0:N-1}^{\mathrm{meas}})
+\,\mathrm d x_{0:N}\,\mathrm d w_{0:N-1}\,\mathrm d\eta.
+\end{multline}
+For each time index $t$, we draw posterior predictive samples
+$y_k^{\mathrm{rep},(1)},\dots,y_k^{\mathrm{rep},(M)}$, 
+and determine the corresponding 
+$S_k^{\mathrm{rep},(j)} = \exp(y_k^{\mathrm{rep},(j)})$.
+Let $l_k$ and $u_k$ denote the empirical $2.5\%$ and 
+$97.5\%$ quantiles of $(S_k^{\mathrm{rep},(j)})_j$, respectively. 
+We define the posterior predictive interval PPI$_{95\%, t} = [l_k, u_k]$.
+We then define the interval penalty at time $t$
+\begin{align}
+\ell_{\rm ppi, 95\%}(t)
+&{}={}
+u_k - l_k
++20\;\mathrm{dist}(S_k^{\mathrm{meas}}; \mathrm{PPI}_{95\%, t}).
+\end{align}
+This encourages predictive intervals that are both narrow 
+and well calibrated. 
+We can now define the posterior predictive score as
+\begin{equation}
+s_{\mathrm{pp}}
+=
+\exp\left(
+-
+\frac{
+\sum_{t=0}^{N-1}\ell_{\rm ppi, 95\%}(t)
+}{
+2\sum_{t=0}^{N-1}S_k^{\rm meas}
+}
+\right).
+\end{equation}
+
+\textit{Overall score.}
+We define the total score as the average of the scores 
+we introduced above with two ``deal-breakers'': values
+$\widehat{R} > 1.1$ or $\mathrm{div} > 5$ lead to a zero 
+score. We define
+\begin{equation}
+  s_{\rm tot}
+  =
+  1_{\mathrm{div}\leq 5}
+  1_{\widehat{R} \leq 1.1}
+  \frac{
+  s_{\mathrm{pp}} + s_{\mathrm{div}} + s_{\widehat R} + s_{s} + s_{\mathrm{ess}}
+  }{5}.
+  \label{eq:total_score}
+\end{equation}
+
+
+\section{Agent-driven evolution}\label{sec:evolution}
+In this section, we discuss how OpenEvolve~\cite{openevolve} is 
+used to evolve the prior distribution of $\eta$ and $x_0$
+to maximise the total score.
+The evolution starts from an \textit{initial program}
+which specifies the model parametrisation and 
+prior distributions.
+OpenEvolve keeps a database of candidate programs, 
+uses LLMs to propose mutations to promising programs, 
+evaluates the new code with a user-supplied evaluator, 
+and feeds the results back into the database, so future 
+prompts are conditioned on what has worked so far.
+Following the AlphaEvolve architecture~\cite{AlphaEvolve2025},
+the population is further split into multiple islands, 
+meaning multiple semi-isolated subpopulations evolve 
+in parallel rather than a single global population.
+The MAP-Elites algorithm~\cite{MouretClune2015} is further 
+used to balance quality and diversity in the population.
+
+In this work, LLMs are used to make an educated guess of 
+parametrisations and prior distributions that can lead 
+to a good estimation, while an evaluator serves as an 
+external critic by computing $s_{\rm tot}$.
+The overall scheme makes this LLM-driven evolution 
+resilient to LLM hallucinations and allows leveraging
+state-of-the-art language models with a very large number of 
+parameters and large context sizes
+such as ChatGPT 5.x, Gemini, or Claude Opus.
+
+\textit{Multistage evaluation.}\label{sec:multistageEval}
+Since each MCMC run can be rather time-consuming, we want 
+to be able to identify setups (parametrisations and 
+choices of priors) that leads to a poor-quality estimation.
+We, therefore, propose a multi-stage evaluator: 
+in Stage 1, the evaluator simply checks whether the mutated 
+program compiles, and whether any of the prior variances
+are too low. This way, we can eliminate early overly 
+informative priors without having to perform time-consuming 
+MCMC operations.
+In Stage 2, the evaluator runs MCMC with 10,000 draws 
+after 10,000 samples for tuning and computes the total 
+score in~\eqref{eq:total_score}.
+A third stage with 20,000 samples for tuning and 20,000
+draws can be used when called for by the problem geometry.
+
+\textit{System prompt design.}\label{sec:promptDesign}
+The evolution is driven by the total score,
+$s_{\rm tot}$, while the LLMs are informed by the individual 
+scores, which are computed by the evaluator, 
+and a zero-shot code prompt that combines role prompting, 
+system prompting, and contextual prompting~\cite{Boonstra2025} which specifies
+(i) the objectives of the evolution,
+(ii) constraints (what the LLM should not do),
+(iii) suggestions and instructions.
+
+\textit{Initial program.}\label{sec:priors}
+Weakly informative priors we used in the initial program.
+For $\mu$ we let $\mu \sim \mathcal{N}(\hat{\mu}, 0.5^2)$, where $\hat{\mu}$
+is the arithmetic mean of $h^{-1}\log \Delta S_k$.
+For the mean reversion rate, $\kappa$, we use a a positively-constrained
+truncated Gaussian prior, that is $\kappa \sim \mathrm{TruncatedNormal}(2, 0.5; \kappa > 0)$. 
+The long-running variance is assigned a log-normal prior, 
+$\theta \sim \log\mathcal{N}(\log \hat{\theta}, 0.4^2)$,
+with $\hat{\theta}$ being the empirical variance of $h^{-1}\log \Delta S_k$.
+The vol-of-vol parameter is assigned an exponential prior 
+$\xi \sim \mathrm{Exp}(2)$. 
+We lastly choose
+$v_0 \sim \log\mathcal{N}(\log \hat{\theta}, 0.5^2)$, 
+implying a log-normal prior on $v_0$.
+
+\section{Results}\label{sec:results}
+In this section we show the application of the above 
+methodology to two case studies. In Section \ref{sec:results:synthetic}
+we use synthetic data, so that the results can be compared to the 
+known ground truth. In Section \ref{sec:results:stockmarket}
+we apply the methodology to a time series of the 
+Vanguard FTSE All-World Index (Ticker: \texttt{VWCDE.DE}).
+In all cases, for the sake of simplicity, we fix $\rho = 0$.
+
+\subsection{Synthetic data}\label{sec:results:synthetic}
+The first dataset we used was synthetic data with 
+$\mu = 0.05$, $\kappa=4$, $\xi = 0.7$, $\theta = 0.2$, $v_0 = 0.02$ and $S_0 = 1$.
+The resulting simulated price path, $S_k$, and the instantaneous variance, $v_k$, are 
+shown in Figure~\ref{fig:synthetic:S}.
+We ran 75 iterations of OpenEvolve using a mix of ChatGPT 5.4 (40\% of the time)
+and Gemini 3 Flash (60\% of the time).
+\begin{figure}[htpb]
+      \centering
+      \includegraphics[width=0.95\linewidth]{images/initial_synth_price.png}\\
+      \includegraphics[width=0.95\linewidth]{images/variance.png}
+
+      \caption{(Top) The red line shows the simulated asset price path generated from the Heston model using known parameters. The gray thin lines in the background are samples of the posterior distribution of $S_k$ corresponding to the best model determined by openevolve. (Bottom) Corresponding actual path of $v_k$ (red line) and samples from the posterior distribution of $v_k$.
+      }
+      \label{fig:synthetic:S}
+\end{figure}
+
+Figure \ref{fig:synthetic:S} shows 1,000 paths drawn from the posterior 
+distribution of $S_k$ for the best model returned by OpenEvolve. 
+We observe that the samples of $v_k$ are particularly tightly concentrated 
+around the true path, which was unknown to the model.
+Likewise, $S_k$ sits well among paths drawn from the corresponding posterior
+of the best model.
+This is evidence, that the estimated Heston model fits the observations 
+of $S_k$ and offers good estimates of the lateral variable, $v_k$.
+
+The prior distributions of the best program computed by 
+OpenEvolve are as follows:
+(i) $\mu \sim \mathcal{N}(\hat{\mu}, 0.5^2)$,
+(ii) $\kappa \sim \log\mathcal{N}(\log 2, 0.6)$. 
+(iii) $\theta \sim \log\mathcal{N}(\log \hat{\theta}, 1)$,
+(iv) $\xi \sim \log\mathcal{N}(\log 0.5, 0.7)$, 
+and 
+(v) $v_0 \sim 10^{-8} + \log\mathcal{N}(\log \hat{\theta}, 1)$, 
+implying a log-normal prior on $\nu_0$.
+
+In Table \ref{tab:synthetic:parameter-comparison} 
+we present the posterior estimates of the initial and 
+best program computed by openevolve.
+The scores of the initial and best program are shown 
+in Table \ref{tab:synthetic:scores}.
+Although the exact values of the model parameters
+are not estimated accurately, as we see in Table 
+ \ref{tab:synthetic:parameter-comparison}, 
+openevolve achieves a $+0.185$ increase in the 
+posterior predictive score, at the expense of a 
+decrease in the ESS score, which is, nonetheless,
+not critical.
+In other words, it achieves a tigher fit of the model 
+on the data.
+We will now turn to a more interesting case 
+using actual stock price data.
+
+\begin{table}[htpb]
+\centering
+\caption{Parameter comparison between true values and posterior summaries of our inital (top) and best (bottom) programs for the case of synthetic data.}
+\label{tab:synthetic:parameter-comparison}
+\begin{tabular}{lccccc}
+\hline
+Parameter & True & Median & Mean & Mode & St. dev.\\
+\hline
+$\mu$     & 0.05 & -0.179 & -0.178 & -0.189 & 0.323 \\
+$\xi$     & 4    & 1.714 & 0.548 &  0.494 &  0.181 \\
+$\theta$  &  0.2 & 0.335 & 0.347& 0.312 & 0.111\\
+$\kappa$  & 0.7  & 0.526 & 1.737 & 1.676 &  0.625 \\
+\hline
+\end{tabular}
+
+\vspace{0.5em}
+
+\begin{tabular}{lccccc}
+\hline
+Parameter & True & Median & Mean & Mode & St. dev.\\
+\hline
+$\mu$ & 0.05 & -0.173 & -0.172 & -0.202& 0.318 \\
+$\xi$ & 4 &  0.430 & 0.463 & 0.395& 0.160 \\
+$\theta$ &  0.2 & 0.445 &  0.462 & 0.392& 0.225\\
+$\kappa$ & 0.7 &  1.277 &  1.400  & 1.081& 0.670\\
+\hline
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+    \centering
+\caption{Scores of inital and final program}
+\label{tab:synthetic:scores}
+\begin{tabular}{lccc}
+\hline
+Score.                  & Initial & Best\\
+\hline
+$s_{\rm tot}$           & 0.803   & 0.842  \\
+$s_{\rm pp}$            & 0.226   & 0.422\\
+$s_{\rm div}$           & 1       & 1\\
+$s_{\widehat{R}}$       & 1       & 1\\
+$s_{\rm ess}$           & 0.930   & 0.932  \\
+$s_s$                   & 0.859   & 0.856 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Stockmarket modelling}\label{sec:results:stockmarket}
+The second dataset was the adjusted closing price of the Vanguard 
+FTSE All-World Index (Ticker: \texttt{VWCDE.DE}) over a three-year period.
+The corresponding price series is shown in Figure~\ref{fig:ftse}.
+\begin{figure}[htpb]
+      \centering
+      \includegraphics[width=0.95\linewidth]{images/modeplotsynth.png}
+      \caption{(Top) Adjusted closing price of \texttt{VWCDE.DE} over a three-year period; the red line shows the observed 
+      data, and the the thin gray lines are samples from the 
+      posterior marginal of $S_t$ corresponding to the best 
+      model. (Bottom) Corresponding samples of the instantaneous volatility.}
+      \label{fig:ftse}
+\end{figure}
+
+Again, OpenEvolve was used with the same LLMs.
+For each dataset, 100 iterations were run. 
+Both programs were run with 10,000 draws and 10,000 tune.
+The estimated posteriors of the model parameters are 
+summarised in Table \ref{tab:stock:parameter-comparison}.
+The scores of the best evolved program are shown 
+in Table \ref{tab:stock:scores}.
+
+
+\begin{table}[htpb]
+    \centering
+\caption{Parameters of posterior summaries of evolved Implementation for Actual Data.}
+\label{tab:stock:parameter-comparison}
+\begin{tabular}{lcccc}
+\hline
+Parameter & Median & Mean & Mode & St. dev. \\
+\hline
+$\mu$ & 0.640 & 0.639 & 0.658 & 0.181 \\
+$\xi$ & 2.367 & 2.390 & 2.365 & 0.431 \\
+$\theta$ & 0.038 & 0.047 & 0.012 & 0.037 \\
+$\kappa$ & 1.413 & 1.706 & 1.072 & 1.174\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+    \centering
+\caption{Scores of best program of stock market data}
+\label{tab:stock:scores}
+\begin{tabular}{lc}
+\hline
+Score                 & Value\\
+\hline
+$s_{\rm tot}$          & 0.827 \\
+$s_{\rm pp}$           & 0.411\\
+$s_{\rm div}$          & 1 \\
+$s_{\widehat{R}}$      & 1  \\
+$s_{\rm ess}$          & 0.895  \\
+$s_{\rm s}$                & 0.857\\
+\hline
+\end{tabular}
+\end{table}
+
+
+
+
+Afer 60 iterations, OpenEvolve made some significant changes to the code,
+mainly to the priors. In particular, the estimated $\hat{\theta}$, was 
+capped from below at $2 \cdot 10^{-4}$.
+This change ensures that when the sample variance is very small, 
+the prior centre does not collapse towards zero.
+The prior of $\kappa$ was changed from a truncated normal
+to a log-normal prior. 
+This guarantees positivity by construction, avoiding the need for 
+hard truncation and leading to a smoother parameter space for inference.
+The prior on $\mu$ was widened by increasing its standard deviation to 
+$0.7$ from $0.5$, that is, $\mu \sim \mathcal{N}(\hat{\mu}, 0.7^2)$.
+The prior on the volatility-of-volatility parameter, $\xi$,
+was changed from an exponential distribution to a log-normal one.
+While both priors enforce positivity, the log-normal distribution 
+avoids concentrating of mass near zero and promotes
+moderate to large values of $\xi$.
+The prior variance of $v_0$ was modified from 
+log normal to a truncated normal prior centred around 
+$\hat{\theta}$, with a standard deviation
+bounded away from 0, that is
+\begin{subequations}
+    \begin{align}
+        v_0 \sim{}& \operatorname{TruncatedNormal}(\hat{\theta}, \sigma^2; v_0 \geq 0), 
+        \\
+        \sigma ={}& \max\left(0.8\,\hat{\theta},\, 0.03\right)
+    \end{align}
+\end{subequations}
+OpenEvolve also modified the Heston discretisation by 
+introducing a smoothing intro the $v$-updates by 
+defining
+\begin{equation}
+v_{{\rm mid}, k} = \tfrac{1}{2}\left(v_k + v_{k+1}\right),
+\end{equation}
+and using $v_{{\rm mid}, k}$ rather than $v_k$ in the 
+$\Lambda$-updates, that is,
+\begin{equation}
+    \Lambda_{k+1} 
+{}={} 
+    \Lambda_k 
+    + \left(\mu - \tfrac{1}{2}v_{{\rm mid}, k}\right)h 
+    + \sqrt{v_{{\rm mid}, k} h} Z_k^S,
+\label{eq:lambda-updates:v2}
+\end{equation}
+According to a comment by the LLM, this is done 
+to ``improve posterior predictive calibration.''
+
+The scores shown in Table \ref{tab:stock:scores}
+for the best program indicate a well calibrated model.
+The simulated paths, sampled from the posterior 
+marginal distribution of $S_t$ shown in Figure 
+\ref{fig:ftse} show that behaviour of the observed time 
+series is captured by the estimated Heston model.
+
+\section{Conclusions \& Future Work}\label{sec:conclusions}
+This paper demonstrated the potential of evolutionary 
+algorithms driven by LLMs to produce meaningful 
+Bayesian estimates of the parameters and paths of 
+the stochastic Heston model---a challenging task 
+that otherwise requires significant effort by an 
+expert. 
+
+The results are encouraging and can be extended to 
+other stochastic models. 
+First, the approach could be benchmarked against established state-space estimation methods for the Heston model, 
+    including extended Kalman filtering, particle filtering techniques~\cite{BlancBlocquel2024,BaoFengZhang2025,Gruszka2022,Li2013}
+\begin{itemize}
+    \item Several avenues remain open for future work:
+    \item 
+    \item the framework could be extended to the more complex models, such as the Bates model~\cite{Bates}, which extends the Heston model by adding a Poisson-driven jump component.
+    to asset prices. This would test whether OpenEvolves' flexibility generalises
+    beyond the single-factor continuous diffusion setting studied here.
+    \item Since OpenEvolves performance is directly coupled to the capability of its underlying LLM ensemble. As LLM models continue to improve
+    in mathematical reasoning and code generation, the quality of proposed mutations can be expected to improve correspondingly.
+    \item A key limitation of the proposed approach is computational cost. Each iteration of the evolutionary loop requires one or more API 
+    calls to the LLM to generate candidate programs. This is then followed by execution and evaluation of the resulting PyMC sampler, which is 
+    computationally expensive due to the nature of the program. However, with access to more computing power, the generation and execution of the candidate
+    programs can be sped up. 
+    \item The multistage evaluation pipeline (Section~\ref{sec:multistageEval}) could be extended 
+    to incorporate additional stages, with an increased number of tuning steps and posterior samples per 
+    iteration. This would allow the fitness function to more accurately distinguish between candidate programs,
+    potentially improving the quality of the evolutionary search at the cost of additional computation.
+\end{itemize}
+
+
+
 \chapter{System Requirements and Specifications}
-\section{ }
+The key goal of this proejct can be split into two distinct sections.
+
+Firstly is the development of a solver for the Black Scholes PDE using the,
+Explicit FDM. The requirements are as follows:
+\begin{table}[H]
+    \centering
+    \caption{Project requirements, type, and verification}
+    \label{tab:project_requirements}
+    \begin{tabular}{p{10cm}cc}
+    \hline
+    Requirement & Type & Verification \\
+    \hline
+    Discretise the GBM and visualise the results in Python & 0.827 & \\
+    Extend the GBM to price European calls and puts using Monte Carlo & 0.827 & \\
+    Accelerate Monte Carlo using CUDA & 0.827 & \\
+    Price European calls and puts using the closed-form Black--Scholes equation & 0.827 & \\
+    Understand finite difference methods and how they apply to the Black--Scholes PDE & 0.827 & \\
+    Create an explicit FDM solver for calls and puts in Python & 0.827 & \\
+    Compare accuracy against the closed-form solution for both CUDA and Python implementations & 0.827 & \\
+    Visualise the resulting option surface & 0.827 & \\
+    Benchmark the solver using accuracy and runtime for both CUDA and Python & 0.827 & \\
+    Plot the resulting benchmark data & 0.827 & \\
+    Accelerate the explicit solver using CUDA & 0.827 & \\
+    Optimise the CUDA implementation & 0.827 & \\
+    \hline
+    \end{tabular}
+\end{table}
+Second, is the development of a repository for parameter estimation of the Heston PDE and corresponding, 
+OpenEvolve suite. The requirements are as follows:
+\begin{table}
+    \centering
+\caption{Scores of best program of stock market data}
+\label{tab:stock:scores}
+\begin{tabular}{lccc}
+\hline
+Requirement                 & Type & Verification\\
+\hline
+Discretization of the GBM and visualisation in Python              & 0.827 & \\
+Extend the GBM to price European Calls \& Puts using Monte Carlo   & 0.827 & \\
+Accelerate Monte Carlo using CUDA                & 0.827 & \\
+Price European Calls\& Puts using the Closed-form BSE           & 0.827 & \\
+Understand the FDMs and how they apply to the BSE PDE                                            & 0.827 & \\
+Create a solver using the Explicit FDM for Calls and Puts in Python                              & 0.827 & \\
+Compare accuracy against the closed form solution for both CUDA and Python implementations         & 0.827 & \\
+Visualise the Option surface produced           & 0.827 & \\
+Benchmark the solver using the metrics accuracy and time for CUDA and Python         & 0.827 & \\
+Plot the resulting benchmarks           & 0.827 & \\
+Accelerate the Explicit solution using CUDA           & 0.827 & \\
+Optimize the CUDA implementation           & 0.827 & \\
+\hline
+\end{tabular}
+\end{table}
 
 \chapter{Design}
-\chapter{Implementation}
+
+
+
 \chapter{Testing}
 \chapter{System Evaluation and Experimental Results}
 
