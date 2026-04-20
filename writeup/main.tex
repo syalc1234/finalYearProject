@@ -29,6 +29,8 @@
 \usetikzlibrary{shapes,arrows,positioning,calc} 
 \usetikzlibrary{arrows.meta}
 
+\newcommand{\ps}[1]{{\color{red} #1}}
+
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\E}{\mathbb{E}}
@@ -141,7 +143,7 @@ By submitting your dissertation you declare that you have completed the tutorial
 
 \chapter{Background}
 \section{The Geometric Brownian Motion}
-Finanical asset prices are inherently uncertain and capturing their stochastic behaviour is central to finance, particularly in pricing derivatives. 
+Financial asset prices are inherently uncertain and capturing their stochastic behaviour is central to finance, particularly in pricing derivatives. 
 The Geometric Brownian Motion is a fundamental model for stock price dynamics \cite{alma991001559369708046}. It forms the foundation of the Black--Scholes framework and is widely used for derivatives pricing. It is governed by the stochastic differential equation
 \begin{equation}
     dS_t = \mu S_t\,dt + \sigma S_t\,dW_t
@@ -181,6 +183,7 @@ Equation \ref{eq:discGBM} is then used to simulate sample paths of the stock pri
 \end{figure}
 
 \section{The Black Scholes Equation and Options}
+\ps{add intro}
 An option is a financial contract whose value is derived from an underlying asset, such as a stock or a bond. The most basic type of option is the European Option
 which grants the holder the right, but not the obligation, to buy or sell an asset at a predetermined price, known as the strike (denoted at $K$), and at an agreed-upon future date, known as the maturity date denoted as $T$ \cite{alma991008708403508046}. The two European options we will be focusing on are the Call and Put.
 
@@ -195,15 +198,14 @@ On the other hand a Put option gives the buyer the right to sell an underlying a
   V(S,T) = max(K-S,0)
 \end{equation}
 
-ADD GRAPH
+\ps{ADD GRAPH}
 
 
 \subsection{Derivation of the Black Scholes equation}
-Derivation from the GBM
+\ps{add intro}
 
-
-The Black Scholes rests on certain assumptions, the underlying asset evolves with the GBM (DEFINED IN .....) with constant $\sigma$ and a constant risk free rate $r$.
-Additionally no arbitrage opportunties, exist which means it is impossible to make a free profit, and there are no transaction costs or taxes associated with owning the underlying
+The Black Scholes rests on certain assumptions, the underlying asset evolves with the GBM \ref{eq:GBM} with constant $\sigma$ and a constant risk free rate $r$.
+Additionally no arbitrage opportunties, exist which means it is impossible to make a profit without taking on risk, and there are no transaction costs or taxes associated with owning the underlying
 
 With these properties in mind it is now possible to construct the Black-Scholes equation (BSE).
 Let $V = V\left(S,t\right)$ denote the value of an option at time $t$ and stock price $S$
@@ -257,6 +259,10 @@ exist. This give:
     d\Pi = r\Pi\,dt = r\left(V - \frac{\partial V}{\partial S}S\right)dt.
     \label{eq:noarb}
 \end{align}
+Risk neutral valuation is a key property of the BSE and explains why the parameter $\mu$ from the underlying GBM is not present in the BSE.
+The delta hedging argument presented, renders risk preference of investors irrelevant. In a risk neutral setting the expected return of all assets is the risk free rate $r$\cite{alma991008589012108046}.
+
+
 Setting (\ref{eq:dPi}) equal to (\ref{eq:noarb}) and dividing through 
 by $dt$:
 %
@@ -276,7 +282,6 @@ Rearranging yields the \textbf{Black-Scholes equation} (BSE):
 \end{align}
 
 \subsection{Risk-Neutral Valuation}
-Risk neutral valuation is a key property of the BSE and explains why the parameter $\mu$ from the underlying GBM is not present in the BSE. The delta hedging argument presented in REFERENCE SECTION renders risk preference of investors irrelevant. In a risk neutral setting the expected return of all assets is the risk free rate $r$\cite{alma991008589012108046}.
 
 \subsection{Boundary and Terminal Conditions}
 For a European Call the Boundary Conditions are:
@@ -374,7 +379,7 @@ Rho denoted as $\rho$ is the sensitivity of an options value to interest rates \
     \label{fig:rho_greek}
 \end{figure}
 
-It is important to note that although the graphs for Rho \ref{fig:rho_greek}and Delta \ref{fig:delta_greek} look similar despite representing different sensitivities. This is beacause both quantities tend to increase as the option moves from out of the money to in the money. EXPLAIN FURTHER.
+It is important to note that although the graphs for Rho \ref{fig:rho_greek}and Delta \ref{fig:delta_greek} look similar despite representing different sensitivities. This is because both quantities tend to increase as the option moves from out of the money to in the money. EXPLAIN FURTHER.
 
 The sensitivities, $\Theta$, $\Gamma$ and $\Delta$ appear directly in the Black-Scholes equation and the BSE can be written as:
 \begin{equation}
@@ -398,7 +403,8 @@ Since this equation cannot, in general, be rearranged algebraically to solve for
 
 
 \section{Finite Difference Method for the BSE}
-Finite difference methods are used to approximate solutions to PDEs. This is done by replacing derivatives with finite difference approximations \cite{alma991006173869708046} and then discretising the time and asset-price domains into a grid \cite{alma991008827533008046}.
+\ps{Fix notation for expressions so it is V(S,T)}
+Finite difference methods are used to approximate solutions to partial differential equations (PDE). This is done by replacing derivatives with finite difference approximations \cite{alma991006173869708046} and in the case of the BSE discretising the time and asset-price domains into a grid \cite{alma991008827533008046}.
 
 The time domain is discretised into $M$ steps using
 \begin{equation}
@@ -412,7 +418,7 @@ The result is an $N \times M$ grid, where each grid point represents the value o
 \begin{figure}[H]
 \centering
 \input{tikz/grid.tex}
-\caption{Stencil for the explicit finite difference method. The unknown value $V_i^k$ is computed from the known values $V_{i-1}^{k+1}$, $V_i^{k+1}$, and $V_{i+1}^{k+1}$.}
+\caption{Stencil for the explicit finite difference method. The unknown value $V_s^t$ is computed from the known values $V_{s-1}^{t+1}$, $V_s^{t+1}$, and $V_{s+1}^{t+1}$.}
 \label{fig:explicit_stencil}
 \end{figure}
 The explicit scheme is forward in time: the value of the option at the next time level depends on the value of the option at the current time level \cite{alma991008708403508046}.
@@ -471,7 +477,7 @@ The explicit scheme can then be used to price an option. In the example below, t
 \end{figure}
 
 
-One limitation of the explicit finite difference method (FDM) for solving the PDE is that it is only conditionally stable. Although the scheme is straightforward to implement, its stability and accuracy depend on satisfying a time-step restriction of the form
+One limitation of the explicit finite difference method (FDM) for solving the PDE is that it is only conditionally stable. Although the scheme is straightforward to implement, its stability and accuracy depend on satisfying a time-step restriction of the form \cite{tavella2000quantitative}
 \begin{equation}
  \Delta t \leq \frac{(\Delta S)^2}{\sigma^2}.
 \end{equation}
@@ -480,7 +486,7 @@ In addition, discretising the PDE introduces truncation error, which measures th
 \begin{equation}
   O\left(\Delta t + \Delta S^2\right),
 \end{equation}
-indicating first-order accuracy in time and second-order accuracy in space.
+indicating first-order accuracy in time and second-order accuracy in space \cite{alma991008540855508046}.
 
 
 As shown in figure~\ref{fig:spatial_relative_error}, as the spatial step size $\Delta S$ decreases the size of the grid increases. This increases accuracy.
@@ -501,8 +507,8 @@ Consequently, improving accuracy by refining the grid can become computationally
   \label{fig:example_image}
 \end{figure}
 
-However, several avenues exist in order to speed up the computational speed required to solve the equation which will be explored in INSERT SECTION AND INSERT SECTION.
-On the other hand more accurate solutions to the pde exist such as Crank Nicolson \cite{alma991008540855508046} and Alternate Direction Implicit \cite{fjelland2012thesis}. 
+However, several avenues exist in order to speed up the computational speed required to solve the equation which will be explored in \ref{sec:PythonOpt} and \ref{sec:ExplicitGPU}.
+On the other hand more accurate solutions to the PDE exist such as Crank Nicolson \cite{alma991008540855508046} and Alternate Direction Implicit \cite{fjelland2012thesis}. 
 
 \section{Down and Out}
 The explicit solution presented in \ref{eq:exp} can be extended to barrier options. Here we consider a down-and-out European call option with barrier level $H$, where the option is immediately knocked out if the asset price falls to or below the barrier. The key changes are in the boundary conditions and payoff functions below:
@@ -518,11 +524,11 @@ V\left(S,t\right) =
 \begin{equation}
 V\left(S,T\right) = S - Ke^{-r\left(T-t\right)},  S \to \infty.
 \end{equation}
-https://link-springer-com.qub.idm.oclc.org/book/10.1007/978-3-031-28378-9
+\ps{https://link-springer-com.qub.idm.oclc.org/book/10.1007/978-3-031-28378-9}
 A down-and-out call is typically less expensive than a vanilla European call because the barrier introduces an additional condition under which the option becomes worthless prior to maturity.
 This feature can be beneficial when a lower initial premium is desired. Moreover, as the barrier is placed further away from the asset price path, the probability that the underlying breaches the barrier decreases.
 Consequently, the effect of the barrier diminishes, and the down-and-out call price approaches the price of the corresponding European call.
-
+\ps{INSERT OPTION SURFACE}
 \section{Explicit Solver Python Implementation}
 The explicit solver used to generate Figure~\ref{fig:explicit_surface} was implemented in Python. 
 Python was a suitable choice for this stage of the project because it provides strong support for scientific computing through \textit{NumPy} and \textit{SciPy},
@@ -547,9 +553,9 @@ for n in reversed(time_steps):
                 + c[i] * V[n+1, i+1]
 \end{verbatim}
 
-A full implementation is provided in INSERT REFERENCE.
+A full implementation is provided in \ps{INSERT REPO LINK}.
 
-\subsection{Optimisation \& Benchmarking}
+\subsection{Optimisation \& Benchmarking}\label{sec:PythonOpt}
 The initial implementation serves as a baseline, as it relies only on arrays and standard NumPy operations. 
 Before moving to GPU acceleration, the Python implementation can be improved using the \textit{Numba} library. 
 Numba provides a just-in-time (JIT) compiler through the \texttt{@jit} decorator, which translates Python functions into highly optimised machine code at run time.
@@ -580,6 +586,7 @@ For benchmarking purposes, the option priced is a European Call Option with stoc
  0.375 & 273,270 & 1139 & 239.9 \\
  \hline
 \end{tabular}
+\ps{right graph to be removed}
 \caption{Runtime comparison between the pure Python and Numba implementations of the explicit finite difference solver.}
 \label{tab:numba-benchmark}
 \end{table}
@@ -589,7 +596,7 @@ For benchmarking purposes, the option priced is a European Call Option with stoc
   \caption{Computation time of the explicit finite difference method as the grid is refined.}
   \label{fig:NumbaBenchmark}
 \end{figure}
-Table \ref{tab:numba-benchmark} shows that the Numba implementation significantly outperforms the pure Python baseline. As the grid is refined the computational cost for both implementations significantly increases. However, the Python implementation scales much less efficiently as the nested loop updates incure significant overhead. In contrast, Numba compiles these loops to efficient machine code, leading to much lower runtimes with a 239.9x speed up when $\Delta S=0.375$. The slight increase in between $\Delta S = 0.75$ and $\Delta S = 0.375$ can be attributed to the larger grid exceeding the CPU cache capacity.
+Table \ref{tab:numba-benchmark} shows that the Numba implementation significantly outperforms the pure Python baseline. As the grid is refined the computational cost for both implementations significantly increases. However, the Python implementation scales much less efficiently as the nested loop updates incur significant overhead. In contrast, Numba compiles these loops to efficient machine code, leading to much lower runtimes with a 239.9x speed up when $\Delta S=0.375$. The slight increase in between $\Delta S = 0.75$ and $\Delta S = 0.375$ can be attributed to the larger grid exceeding the CPU cache capacity.
 
 
 \section{Monte Carlo}\label{sec:monteCarlo}
@@ -641,6 +648,7 @@ As shown in Figure~\ref{fig:MCcpuBenchmark}, the CPU runtime increases rapidly a
 This demonstrates that, although Monte Carlo methods are simple and flexible, achieving higher accuracy on the CPU alone quickly becomes computationally expensive. Since each simulated path is independent, Monte Carlo methods are highly parallelisable and therefore well suited to GPU acceleration.
 
 \section{Application of GPUS}
+\ps{needs refined, still in the form of notes/bullet points}
 Graphics Processing Units (GPUS),
 
 Although the GPU was originally developed for graphics processing excelling at
@@ -683,11 +691,11 @@ the payoffs are summed using \texttt{thrust::reduce}, and the result is divided 
 
 Within the kernel, each thread first computes its global path index:
 \begin{verbatim}
-const unsigned pathIdx = blockIdx.x * blockDim.x + threadIdx.x;
+pathIdx = blockIdx.x * blockDim.x + threadIdx.x;
 \end{verbatim}
 This gives every thread a unique starting index. The total number of threads launched in the grid is then computed as
 \begin{verbatim}
-const unsigned stride = blockDim.x * gridDim.x;
+stride = blockDim.x * gridDim.x;
 \end{verbatim}
 A grid-stride loop is used so that the implementation remains flexible when the number of simulated paths exceeds the number of available threads:
 \begin{verbatim}
@@ -704,11 +712,12 @@ For each assigned path, the thread computes the terminal stock price using the r
 
 In the experiments, a block size of 256 threads was used. The number of blocks required is therefore computed as
 \begin{equation}
-    \text{grid size} = \left\lceil \frac{\text{number of paths}}{256} \right\rceil.
+    \text{grid size} =  \frac{\text{number of paths}}{256}
 \end{equation}
 This ensures that enough threads are launched to cover all simulation paths while still allowing the grid-stride loop to handle larger workloads efficiently.
 
-\subsection{Why the Explicit Solver Can Also Benefit}
+\subsection{Why the Explicit Solver Can Also Benefit}\label{sec:ExplicitGPU}
+stencil operation and extern shared.....
 \subsection{Benchmark Setup}
 \subsection{Performance Metrics}
 
@@ -721,15 +730,15 @@ The design process of my application followed the workflow shown in Figure~\ref{
     \label{fig:design_process}
 \end{figure}
 
-Once the plan had reached an acceptable stage, the next step was to use Jupyter notebooks and Google Colab for rapid prototyping and validation of results. This made it easy to test different implementations and libraries without extensive setup. The stochastic component of the code made it hard to test certain code components which ruled out using methodologies like TDD INSERT REFERENCE, TESTING IS DISUCSSED IN INSERT SECTION. The use of Juptyer notebooks meant I was able to verify visually that my results where accurate.
+Once the plan had reached an acceptable stage, the next step was to use Jupyter notebooks and Google Colab for rapid prototyping and validation of results. This made it easy to test different implementations and libraries without extensive setup. The stochastic component of the code made it hard to test certain code components which ruled out using methodologies like \ref{TDD INSERT REFERENCE, TESTING IS DISUCSSED IN INSERT SECTION}. The use of Jupyter notebooks meant I was able to verify visually that my results where accurate.
 I refined the code to ensure it was both accurate and functional before moving to the \textit{Python Code Stage}. This stage involved transferring the code from the Jupyter notebook into the project folder and improving an already working implementation. It also provided the benefit of version control. Since a main goal of the project is to measure the efficiency and speed of the code, it was important to optimise it carefully. At this stage, tests were also introduced to ensure that no regressions were introduced. It also became easier to generate plots, since they could be exported as \textit{tex} files and imported directly into the dissertation.
 
 Once the Python implementation was complete, I moved on to CUDA. Although the Python code could not be translated directly into CUDA, understanding the implementation in Python made it easier to develop the CUDA version. The CUDA code was then continually optimised to improve performance. Once the code had reached an acceptable stage, it was benchmarked and the results were plotted in Python.
 
 \chapter{Implementation}
-
+\ps{Graphs and benchmarks will be moved to relevant section same for testing}
 The implementation of this section can be split into two distinct sections
-The inital CPU implementation written in Python and tested in pytest
+The initial CPU implementation written in Python and tested in pytest
 and the CUDA implementation written in C++ and tested in ...
 \section{Testing}
 Although there is a stochastic component to the code written which makes it hard to test as the output isn't deterministic.
@@ -1496,7 +1505,7 @@ using actual stock price data.
 
 \begin{table}[htpb]
 \centering
-\caption{Parameter comparison between true values and posterior summaries of our inital (top) and best (bottom) programs for the case of synthetic data.}
+\caption{Parameter comparison between true values and posterior summaries of our initial (top) and best (bottom) programs for the case of synthetic data.}
 \label{tab:synthetic:parameter-comparison}
 \begin{tabular}{lccccc}
 \hline
@@ -1526,7 +1535,7 @@ $\kappa$ & 0.7 &  1.277 &  1.400  & 1.081& 0.670\\
 
 \begin{table}
     \centering
-\caption{Scores of inital and final program}
+\caption{Scores of initial and final program}
 \label{tab:synthetic:scores}
 \begin{tabular}{lccc}
 \hline
@@ -1688,7 +1697,7 @@ First, the approach could be benchmarked against established state-space estimat
 
 
 \chapter{System Requirements and Specifications}
-The key goal of this proejct can be split into two distinct sections.
+The key goals of this project can be split into two distinct sections.
 
 Firstly is the development of a solver for the Black Scholes PDE using the,
 Explicit FDM. The requirements are as follows:
@@ -1716,7 +1725,7 @@ Explicit FDM. The requirements are as follows:
     \end{tabular}
 \end{table}
 Second, is the development of a repository for parameter estimation of the Heston PDE and corresponding, 
-OpenEvolve suite. The requirements are as follows:
+evaluator for Openevolve \ps{WIP}. The requirements are as follows:
 \begin{table}
     \centering
 \caption{Scores of best program of stock market data}
