@@ -13,7 +13,6 @@
 \fi
 \usepackage{hyperref}
 \usepackage{graphicx}
-\usepackage{geometry}
 \usepackage{placeins}
 \usepackage{float}
 \usepackage{tikz}
@@ -24,17 +23,27 @@
 \usepackage{amssymb}
 \usepackage{mathtools}
 \usepackage{nicefrac}
+\usepackage[margin=1in]{geometry}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{caption}
+
 \usepackage[english]{babel}
 \renewcommand{\baselinestretch}{1.25} 
 \usetikzlibrary{shapes,arrows,positioning,calc} 
 \usetikzlibrary{arrows.meta}
-
+\pagenumbering{roman}
 \newcommand{\ps}[1]{{\color{red} #1}}
 
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\E}{\mathbb{E}}
-\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\dd}{\mathrm{d}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{T}{>{\raggedright\arraybackslash}p{0.34\textwidth}}
+\newcolumntype{D}{>{\raggedright\arraybackslash}X}
+\newcolumntype{O}{>{\raggedright\arraybackslash}p{0.16\textwidth}}
 \providecommand{\tikzsetnextfilename}[1]{}
 
 \begin{document}
@@ -140,17 +149,17 @@ By submitting your dissertation you declare that you have completed the tutorial
 \newpage
 
 \chapter{Introduction and Problem Area}
-
+\ps{Roman numerals}
 \chapter{Background}
 \section{The Geometric Brownian Motion}
 Financial asset prices are inherently uncertain and capturing their stochastic behaviour is central to finance, particularly in pricing derivatives. 
-The Geometric Brownian Motion is a fundamental model for stock price dynamics \cite{alma991001559369708046}. It forms the foundation of the Black--Scholes framework and is widely used for derivatives pricing. It is governed by the stochastic differential equation
+The Geometric Brownian Motion is a fundamental model for stock price dynamics~\cite{alma991001559369708046}. It forms the foundation of the Black--Scholes framework and is widely used for derivatives pricing. It is governed by the stochastic differential equation
 \begin{equation}
     dS_t = \mu S_t\,dt + \sigma S_t\,dW_t
     \label{eq:GBM}
 \end{equation}
 where $S_t$ is the stock price at time $t$, $\mu$ is the drift, $\sigma$ is the volatility, and $W_t$ is a standard Brownian motion.
-To simulate how asset prices evolve, the SDE in (\ref{eq:GBM}) must be discretised. We use the log-Euler method \cite{alma991003696519708046}. Let $x_t = \ln(S_t)$ denote the log-price process. Applying It\^o's lemma \cite{alma991008758143208046} gives
+To simulate how asset prices evolve, the SDE in (\ref{eq:GBM}) must be discretised. We use the log-Euler method~\cite{alma991003696519708046}. Let $x_t = \ln(S_t)$ denote the log-price process. Applying It\^o's lemma~\cite{alma991008758143208046} gives
 \begin{equation}
   dx_t = \left(\mu - \frac{1}{2}\sigma^2\right)dt + \sigma\,dW_t.
 \end{equation}
@@ -164,20 +173,12 @@ where $Z_{n+1} \sim \mathcal{N}(0,1)$. At each time step, a new independent samp
   \label{eq:discGBM}
 \end{equation}
 
-A key property of GBM is that, by It\^o's lemma, $\ln(S_t)$ is normally distributed, which means $S_t$ is lognormally distributed (shown in \ref{fig:gbm}) which ensures that simulated prices remain strictly positive. This is a essential property for its applications in finance. 
+A key property of GBM is that, by It\^o's lemma, $\ln(S_t)$ is normally distributed, which means $S_t$ is lognormally distributed (shown in~\ref{fig:gbm}) which ensures that simulated prices remain strictly positive. This is a essential property for its applications in finance. 
 
-Equation \ref{eq:discGBM} is then used to simulate sample paths of the stock price. Figure~\ref{fig:gbm} shows 75 simulated geometric Brownian motion paths over a 365-day period.
+Equation~\ref{eq:discGBM} is then used to simulate sample paths of the stock price. Figure~\ref{fig:gbm} shows 75 simulated geometric Brownian motion paths over a 365-day period.
 \begin{figure}[H]
     \centering
-    \begin{minipage}[t]{0.44\textwidth}
-        \centering
-        \input{tikz/GBM.tex}
-    \end{minipage}
-    \hspace{0.07\textwidth}
-    \begin{minipage}[t]{0.44\textwidth}
-        \centering
-        \input{tikz/logNormaldist.tex}
-    \end{minipage}
+    \input{tikz/GBM.tex}
     \caption{Left: simulated geometric Brownian motion paths over a 365-day period with $\sigma = 0.1$ and $\mu = 0.2$. Right: the lognormal distribution implied by the GBM model.}
     \label{fig:gbm}
 \end{figure}
@@ -185,17 +186,17 @@ Equation \ref{eq:discGBM} is then used to simulate sample paths of the stock pri
 \section{The Black Scholes Equation and Options}
 \ps{add intro}
 An option is a financial contract whose value is derived from an underlying asset, such as a stock or a bond. The most basic type of option is the European Option
-which grants the holder the right, but not the obligation, to buy or sell an asset at a predetermined price, known as the strike (denoted at $K$), and at an agreed-upon future date, known as the maturity date denoted as $T$ \cite{alma991008708403508046}. The two European options we will be focusing on are the Call and Put.
+which grants the holder the right, but not the obligation, to buy or sell an asset at a predetermined price, known as the strike (denoted at $K$), and at an agreed-upon future date, known as the maturity date denoted as $T$~\cite{alma991008708403508046}. The two European options we will be focusing on are the Call and Put.
 
 A Call option gives the buyer the right to buy an underlying asset at $K$ at a given time $T$. The payoff function at maturity can be denoted as:
 \begin{equation}
-  V(S,T) = max(S-K,0)
+  V(S,T) = \max(S-K,0)
 \end{equation}
 where $S$ is the stock price at maturity
-ADD GRAPH
+\ps{ADD GRAPH}
 On the other hand a Put option gives the buyer the right to sell an underlying asset at $K$ and at given time $T$. The payoff function can be denoted as:
 \begin{equation}
-  V(S,T) = max(K-S,0)
+  V(S,T) = \max(K-S,0)
 \end{equation}
 
 \ps{ADD GRAPH}
@@ -204,7 +205,7 @@ On the other hand a Put option gives the buyer the right to sell an underlying a
 \subsection{Derivation of the Black Scholes equation}
 \ps{add intro}
 
-The Black Scholes rests on certain assumptions, the underlying asset evolves with the GBM \ref{eq:GBM} with constant $\sigma$ and a constant risk free rate $r$.
+The Black Scholes rests on certain assumptions, the underlying asset evolves with the GBM~\ref{eq:GBM} with constant $\sigma$ and a constant risk free rate $r$.
 Additionally no arbitrage opportunties, exist which means it is impossible to make a profit without taking on risk, and there are no transaction costs or taxes associated with owning the underlying
 
 With these properties in mind it is now possible to construct the Black-Scholes equation (BSE).
@@ -221,7 +222,7 @@ Substituting $dS = \mu S\,dt + \sigma S\,dW$ and using $(dS)^2 =
   dV = \left(\frac{\partial V}{\partial t} \mu S + \frac{\partial V}{\partial S}  + \frac{1}{2} \frac{\partial^{2} V}{\partial S^2} \sigma^2 S^2\right) dt + \sigma S \frac{\partial V}{\partial S} dW
   \label{eq:ItoApplicationBSE}
 \end{align}
-To eliminate the stochastic term $dW$ in \eqref{eq:ItoApplicationBSE}, we construct a delta-hedged portfolio.
+To eliminate the stochastic term $dW$ in~\eqref{eq:ItoApplicationBSE}, we construct a delta-hedged portfolio.
  Delta hedging refers to the process of buying or selling the underlying asset according to $\Delta = \frac{\partial V}{\partial S}$ \cite{alma991008837579408046}. 
  Let $\Pi$ denote a delta-hedged portfolio consisting of one long option position and a short position of $\Delta$ units in the underlying asset:
 \begin{equation}
@@ -281,9 +282,7 @@ Rearranging yields the \textbf{Black-Scholes equation} (BSE):
     - rV = 0. \label{eq:BSE}
 \end{align}
 
-\subsection{Risk-Neutral Valuation}
-
-\subsection{Boundary and Terminal Conditions}
+\subsection{Boundary and Terminal Conditions} \label{sec:TerminalBoundaryCond}
 For a European Call the Boundary Conditions are:
   \begin{align}
     C\left(0,t\right) &= 0 \forall t \\
@@ -332,8 +331,7 @@ The delta ($\Delta$) of an options contract is defined as the rate of change of 
 \begin{figure}[htbp]
     \centering
     \input{tikz/Delta.tex}
-    \caption{The impact of stock price on the Delta of European Call and Put Option.
-}
+    \caption{Impact of Stock Price(S) on Delta ($\Delta$)}
     \label{fig:delta_greek}
 \end{figure}
 For a European call, the delta ranges from 0 to 1 with respect to the underlying price, while for a put, it ranges from -1 to 0. As seen in\ref{fig:delta_greek}, delta changes most rapidly near the strike, where the option is at the money.
@@ -348,7 +346,7 @@ The negative sign in \ref{eq:theta} indicates that, all else equal, an option lo
 \begin{figure}[H]
     \centering
     \input{tikz/Theta.tex}
-    \caption{The Theta of European Options. }
+    \caption{Impact of Stock Price(S) on Theta ($\Theta$)}
     \label{fig:theta_greeks}
 \end{figure}
 
@@ -361,7 +359,7 @@ Gamma is particularly important for delta hedging, as it quantifies how often a 
 \begin{figure}[H]
     \centering
     \input{tikz/Gamma.tex}
-    \caption{Gamma of European options.}
+    \caption{Impact of Stock Price(S) on Gamma($\Gamma$)}
     \label{fig:gamma_greek}
 \end{figure}
 Figure \ref{fig:gamma_greek} shows that Gamma peaks around the Strike price where the option transitions between in the money and out of the money. As it moves further away from the strike, gamma approaches zero, indicating that delta is constant. 
@@ -456,7 +454,7 @@ Rearranging yields the explicit update formula
   V_i^k = A_i V_{i-1}^{k+1} + B_i V_i^{k+1} + C_i V_{i+1}^{k+1},
   \label{eq:exp}
 \end{equation}
-where, using $S_i = i\Delta S$,
+where, using $S_i = i\Delta S$, \label{sec:coeffs}
 \begin{equation}
 A_i = \frac{1}{2} \Delta t \left(\sigma^2 i^2 - r i\right),
 \end{equation}
@@ -477,7 +475,7 @@ The explicit scheme can then be used to price an option. In the example below, t
 \end{figure}
 
 
-One limitation of the explicit finite difference method (FDM) for solving the PDE is that it is only conditionally stable. Although the scheme is straightforward to implement, its stability and accuracy depend on satisfying a time-step restriction of the form \cite{tavella2000quantitative}
+One limitation of the explicit finite difference method (FDM) for solving the PDE is that it is only conditionally stable. Although the scheme is straightforward to implement, its stability and accuracy depend on satisfying a time-step restriction of the form~\cite{tavella2000quantitative}
 \begin{equation}
  \Delta t \leq \frac{(\Delta S)^2}{\sigma^2}.
 \end{equation}
@@ -489,20 +487,26 @@ In addition, discretising the PDE introduces truncation error, which measures th
 indicating first-order accuracy in time and second-order accuracy in space \cite{alma991008540855508046}.
 
 
-As shown in figure~\ref{fig:spatial_relative_error}, as the spatial step size $\Delta S$ decreases the size of the grid increases. This increases accuracy.
+As shown in figure~\ref{fig:spatial_relative_error}, 
+as the spatial step size $\Delta S$ decreases the size 
+of the grid increases. This increases accuracy as the price
+by the explicit solver converges on the analytical price. 
 
 \begin{figure}[H]
     \centering
-    \input{tikz/SpatialVsRelativeError.tex}
+    \scalebox{0.70}{\input{tikz/SpatialVsRelativeError.tex}}
     \caption{Left: comparison of the explicit FDM price with the analytical Black--Scholes price ($14.273$) for each spatial step. Right: the corresponding relative error.}
     \label{fig:spatial_relative_error}
 \end{figure}
 
-Consequently, improving accuracy by refining the grid can become computationally expensive, as shown in Figure~\ref{fig:example_image}.
+
+Consequently, improving accuracy by 
+refining the grid can become computationally 
+expensive, as shown in Figure~\ref{fig:example_image}.
 
 \begin{figure}[H]
   \centering
-  \input{tikz/fdmTimeTaken.tex}
+  \scalebox{0.75}{\input{tikz/fdmTimeTaken.tex}}
   \caption{Computation time of the explicit finite difference method as the grid is refined.}
   \label{fig:example_image}
 \end{figure}
@@ -524,80 +528,38 @@ V\left(S,t\right) =
 \begin{equation}
 V\left(S,T\right) = S - Ke^{-r\left(T-t\right)},  S \to \infty.
 \end{equation}
-\ps{https://link-springer-com.qub.idm.oclc.org/book/10.1007/978-3-031-28378-9}
-A down-and-out call is typically less expensive than a vanilla European call because the barrier introduces an additional condition under which the option becomes worthless prior to maturity.
-This feature can be beneficial when a lower initial premium is desired. Moreover, as the barrier is placed further away from the asset price path, the probability that the underlying breaches the barrier decreases.
-Consequently, the effect of the barrier diminishes, and the down-and-out call price approaches the price of the corresponding European call.
-\ps{INSERT OPTION SURFACE}
-\section{Explicit Solver Python Implementation}
-The explicit solver used to generate Figure~\ref{fig:explicit_surface} was implemented in Python. 
-Python was a suitable choice for this stage of the project because it provides strong support for scientific computing through \textit{NumPy} and \textit{SciPy},
- together with straightforward visualisation through \textit{Matplotlib}.
+A down-and-out call is typically less expensive than a 
+vanilla European call because the barrier introduces an 
+additional condition under which the option becomes 
+worthless prior to maturity\cite{alma991008837439108046}. 
+This feature can be beneficial when a lower initial premium 
+is desired. The plot shown below corresponds 
+to an option with parameters $\sigma = 0.4030$, $r = 0.0475$, $
+T = 0.0648$, $K = 250$, $N = 25{,}000$, $\Delta S = 0.75$, $S_0 = 245$,
+and barrier levels $H \in \{240, 235, 230, 225, 220, 215\}$.
 
-At a high level, the implementation proceeds as follows:
-\begin{enumerate}
-  \item Initialise a two-dimensional grid representing the option value over stock price and time.
-  \item Apply the terminal and boundary conditions corresponding to the option type.
-  \item Precompute the coefficients of the explicit finite difference scheme.
-  \item Step backwards through time, updating each interior grid point using the explicit update rule.
-\end{enumerate}
-The overall structure of the solver can be summarised as follows:
-\begin{verbatim}
-Initialise grid using the supplied model parameters
-Apply terminal and boundary conditions
-Compute coefficients a[i], b[i], and c[i]
-for n in reversed(time_steps):
-    for i in range(1, M):
-        V[n, i] = a[i] * V[n+1, i-1]
-                + b[i] * V[n+1, i]
-                + c[i] * V[n+1, i+1]
-\end{verbatim}
+One key difference in the plotted option surface \ref{fig:optionSurface} is that it starts from the barrier
+as opposed~\ref{fig:explicit_surface} which starts from 0. 
 
-A full implementation is provided in \ps{INSERT REPO LINK}.
-
-\subsection{Optimisation \& Benchmarking}\label{sec:PythonOpt}
-The initial implementation serves as a baseline, as it relies only on arrays and standard NumPy operations. 
-Before moving to GPU acceleration, the Python implementation can be improved using the \textit{Numba} library. 
-Numba provides a just-in-time (JIT) compiler through the \texttt{@jit} decorator, which translates Python functions into highly optimised machine code at run time.
-
-Because the baseline implementation is dominated by NumPy array operations, 
-it is a natural candidate for Numba acceleration.
-Although NumPy is implemented in C, repeated calls from Python still incur interpreter overhead. 
-Numba reduces this overhead by compiling the relevant numerical code directly, allowing the solver to achieve performance closer to that of low-level languages such as C.
-
-By simply adding the \texttt{@jit} decorator, a considerable speedup can be observed. Speedup is measured using
-\begin{equation}
-  \text{speedup} = \frac{t_{\text{baseline}}}{t_{\text{Numba}}}
-\end{equation}
-For benchmarking purposes, the option priced is a European Call Option with stock price $S_0 = \$274.80$, strike price $K = \$275.00$, time to expiry $T = 0.0548$, volatility $\sigma = 0.1730$, and risk-free rate $r = 0.0375$.
-
-\begin{table}[H]
-\centering
-\begin{tabular}{||c c c c||}
- \hline
- Spatial Step & CPU (ms) & Numba (ms) & Speed-up  \\ [0.5ex]
- \hline\hline
- 3     & 28,585 & 2056 & 13.903 \\
- \hline
- 1.5   & 53,345 & 681 & 78.33 \\
- \hline
- 0.75  & 116,519 & 569 & 204.778  \\
- \hline
- 0.375 & 273,270 & 1139 & 239.9 \\
- \hline
-\end{tabular}
-\ps{right graph to be removed}
-\caption{Runtime comparison between the pure Python and Numba implementations of the explicit finite difference solver.}
-\label{tab:numba-benchmark}
-\end{table}
 \begin{figure}[H]
-  \centering
-  \makebox[\textwidth][c]{\input{tikz/spatialVsTime.tex}}
-  \caption{Computation time of the explicit finite difference method as the grid is refined.}
-  \label{fig:NumbaBenchmark}
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/down_out_surface.png}
+    \caption{Down and out Option surface for a European Call.}
+    \label{fig:optionSurface}
 \end{figure}
-Table \ref{tab:numba-benchmark} shows that the Numba implementation significantly outperforms the pure Python baseline. As the grid is refined the computational cost for both implementations significantly increases. However, the Python implementation scales much less efficiently as the nested loop updates incur significant overhead. In contrast, Numba compiles these loops to efficient machine code, leading to much lower runtimes with a 239.9x speed up when $\Delta S=0.375$. The slight increase in between $\Delta S = 0.75$ and $\Delta S = 0.375$ can be attributed to the larger grid exceeding the CPU cache capacity.
 
+As the barrier level is placed further below the underlying 
+asset price, the probability that the option is 
+knocked out decreases. Consequently, the effect of the barrier 
+becomes weaker, and the price of the down-and-out
+ call approaches that of the corresponding 
+ vanilla European call. This behaviour is illustrated below for 
+ barrier levels $H \in \{240, 235, 230, 225, 220, 215\}$.
+
+\begin{figure}[H]
+    \centering
+    \input{tikz/convergenceBarrier.tex}
+\end{figure}
 
 \section{Monte Carlo}\label{sec:monteCarlo}
 Another option Pricing Methodology derived from the GBM is Monte Carlo simulations. The terminal asset price may be simulated as
@@ -615,31 +577,11 @@ Hence, the Monte Carlo estimator for a European call option based on $N$ simulat
 The accuracy of the Monte Carlo method improves as the number of simulated paths increases, but its convergence rate is relatively slow, with standard error proportional to $N^{-1/2}$. 
 Consequently, obtaining highly accurate prices may require millions of simulations, so improved accuracy comes at a significant computational cost.
 
-\subsection{Benchmarking}
 To illustrate this cost, a European call option is priced while varying the number of simulated paths. For this benchmark, the parameters are fixed at $S_0 = 274.80$, $K = 275.00$, $r = 0.0375$, and $T = 1$ year, with the remaining model parameters held constant.
-\begin{center}
-\begin{tabular}{||c c c ||} 
- \hline
- Number of Paths & Power of 2 & CPU Time Taken (ms)\\ [0.5ex] 
- \hline\hline
- 65,536     & $2^{16}$ & 3.031  \\ 
- \hline
- 262,144    & $2^{18}$ & 11.972   \\
- \hline
- 1,048,576  & $2^{20}$ & 50.223  \\
- \hline
- 4,194,304  & $2^{22}$ & 196.632  \\
- \hline
- 16,777,216 & $2^{24}$ & 836.003 \\ 
- \hline
- 33,554,432 & $2^{25}$ & 2006.624  \\ 
- \hline
-\end{tabular}
-\end{center}
 
 \begin{figure}[H]
   \centering
-  \makebox[\textwidth][c]{\input{tikz/cpuTimeTakenMC.tex}}
+  \scalebox{0.85}{\input{tikz/cpuTimeTakenMC.tex}}
   \caption{CPU runtime of the Monte Carlo pricer as the number of simulated paths increases.}
   \label{fig:MCcpuBenchmark}
 \end{figure}
@@ -647,44 +589,101 @@ To illustrate this cost, a European call option is priced while varying the numb
 As shown in Figure~\ref{fig:MCcpuBenchmark}, the CPU runtime increases rapidly as the number of simulated paths grows. Increasing the path count from $2^{16}$ to $2^{25}$ raises the runtime from $3.031$ ms to $2006.624$ ms. 
 This demonstrates that, although Monte Carlo methods are simple and flexible, achieving higher accuracy on the CPU alone quickly becomes computationally expensive. Since each simulated path is independent, Monte Carlo methods are highly parallelisable and therefore well suited to GPU acceleration.
 
-\section{Application of GPUS}
-\ps{needs refined, still in the form of notes/bullet points}
-Graphics Processing Units (GPUS),
-
-Although the GPU was originally developed for graphics processing excelling at
-three dimensional graphis rendering. The GPU has since evolved to be a powerful
-programmable processor. 
-
-The GPU is designed for a specific set of applications following
-a specific set of requirements. This includes, large computational requirements
-substantial parallelism, and cases were throughput is more important than latency.\cite{Owens2008GraphicsPU}
-
-The reason that GPUs have a significant performance gap between CPUs lies in
-the architecture.  
-Throughput vs Latency, 
-CUDA was developed by NVIDIA, to allow NVIDIA GPUS to be programmed for more general
-purposes while using languages such as C/C++. A CUDA program ecompases both code which
-runs on the CPU known as the host, with little parallel process. The device refers to the
-GPU, were the main parallel process are implemented. 
-The system of CUDA works with a host which refers to the CPU
-and the device which refers to the GPU.
-Data parallelism refers to the ability of a program were many arithmetic operations
-can be performed at the same time. 
 
 
-CUDA has a wide range of libraries avialable for use within CUDA. The main libraries
-used in the context of this project were:
-Libraries used:
-Thrust
-CuRand
-\subsection{Motivation for GPU Acceleration}
+\chapter{Implementation}
+This chapter describes the implementation of the Monte Carlo model,
+the explicit solution of the Black--Scholes equation, 
+and the GPU-accelerated CUDA components developed for this
+project. Python was chosen as the primary implementation 
+language because it provides strong support for scientific 
+computing through \textit{NumPy}, which enables efficient 
+vectorised operations, and \textit{SciPy}, which was used 
+for interpolation and the efficient generation of normally
+distributed random variables. Visualisation was carried out using \textit{Matplotlib}, while the \textit{yfinance} API provided convenient access to market data. GitHub was used for version control throughout the project and also supported pipeline creation.
+Another advantage of Python was its extensive ecosystem, 
+which made it straightforward to package the implementation
+so that it could be installed and reused more easily.
+
+\section{Explicit Solver Python Implementation}
+The implementation of the explicit solver followed the method outlined in Section~\ref{sec:explicit}. 
+First, a two-dimensional grid was initialised to represent the option value over stock price and time. 
+The terminal and boundary conditions were then applied to the grid. Next, the coefficients of the 
+explicit finite difference scheme were precomputed and stored in three arrays. 
+Finally, the solution was obtained by stepping backwards through time and updating each interior point of the grid.
+
+Because the spot price did not always coincide exactly with a grid point,
+interpolation was used to obtain an accurate option value. 
+In particular, \textit{CubicSpline} was used to estimate the option price at the required spot value.
+
+A full implementation is available in the accompanying GitHub repository \cite{yalcin_finalyearproject}.
+
+\subsection{Optimisation}\label{sec:PythonOpt}
+The initial implementation serves as a baseline, as it relies only on arrays and standard NumPy operations. 
+Before moving to GPU acceleration, the Python implementation can be improved using the \textit{Numba} library. 
+Numba provides a just-in-time (JIT) compiler through the \texttt{@jit} decorator, which translates Python functions into highly optimised machine code at run time.
+
+Numba was chosen because it provided the best balance 
+between performance improvement, development speed, 
+and minimal code changes for the explicit finite-difference
+solver. Cython could potentially offer similar or greater 
+CPU performance, but it would require more intrusive code 
+refactoring and a more complex build workflow. 
+PyTorch was not a natural fit because the problem was 
+not a machine learning workload, and introducing a 
+tensor framework would add unnecessary abstraction and 
+overhead for a numerical solver of this type.
+
+Because the baseline implementation is dominated by NumPy array operations, 
+it is a natural candidate for Numba acceleration.
+Although NumPy is implemented in C, repeated calls from Python still incur interpreter overhead. 
+Numba reduces this overhead by compiling the relevant numerical code directly, 
+allowing the solver to achieve performance closer to that of low-level languages such as C.
+
+By simply adding the \texttt{@jit} decorator, a considerable speedup can be observed.
+Results and benchmarks can be found in Chapter~\ref{sec:Benchmarks}
+
+\section{Application of GPUs}
+Graphics Processing Units (GPUs) were originally developed for graphics workloads, 
+particularly three-dimensional rendering, but have since evolved into powerful programmable processors. 
+They are especially well suited to problems with high computational demands, 
+substantial parallelism, and workloads in which throughput is more important than latency \cite{Owens2008GraphicsPU}.
+
+The performance difference between CPUs and GPUs arises primarily from their architectural design. 
+CPUs are optimised for low-latency execution of a small number of complex tasks, 
+whereas GPUs are optimised for high-throughput execution of many tasks in parallel. 
+As a result, GPUs are particularly effective for data-parallel problems, 
+where many arithmetic operations can be performed simultaneously on independent data elements.
+
+CUDA follows a \textit{single-instruction, multiple-thread} (SIMT) execution model, 
+in which many threads execute the same instruction sequence on different data. 
+This is well suited to option-pricing workloads such as Monte Carlo simulation, 
+where each path can be evaluated independently. In practice, threads are organised into blocks,
+which are scheduled onto \textit{streaming multiprocessors} (SMs), the main processing units of the GPU.
+Each SM is responsible for executing groups of threads and managing resources such as registers and shared memory. 
+Efficient GPU performance therefore depends not only on parallelism in the algorithm, 
+but also on how effectively the workload is mapped onto the available SMs.
+
+CUDA also provides \textit{unified memory}, which offers a
+single memory space accessible by both the CPU and GPU. 
+This simplifies programming because data does not always 
+need to be transferred manually between host and device memory. 
+However, explicit memory management can still offer better control over performance, 
+particularly in compute-intensive applications where transfer overheads must be minimised.
+
+CUDA was developed by NVIDIA to enable general-purpose computing on NVIDIA GPUs using languages such as C and C++. 
+In the CUDA programming model, code executed on the CPU is referred to as the \textit{host}, 
+while code executed on the GPU is referred to as the \textit{device}. 
+In this project, CUDA was used to implement the main parallel components of the solver.
+
+CUDA also provides a range of libraries that simplify GPU development. 
+The main libraries used in this project were \textit{Thrust}, 
+which was used for device-side vector operations and reductions, and \textit{cuRAND}, 
+which was used to generate random numbers efficiently on the GPU.
+
 
 \subsection{Monte Carlo GPU Implementation}
 Monte Carlo pricing is well suited to GPU acceleration because each simulation path can be evaluated independently. 
-Since the accuracy of the method improves as the number of paths increases, a large number of independent path evaluations is required.
- This makes Monte Carlo an embarrassingly parallel workload, allowing thousands of GPU threads to execute concurrently under CUDA's SIMT execution model.
-
-The Monte Carlo implementation was written in CUDA. 
 Two device vectors are allocated using the Thrust library: one stores the Gaussian random numbers used to generate terminal asset prices,
 and the other stores the discounted payoff for each simulated path. Once the kernel has completed,
 the payoffs are summed using \texttt{thrust::reduce}, and the result is divided by the total number of paths to obtain the Monte Carlo estimator.
@@ -716,118 +715,173 @@ In the experiments, a block size of 256 threads was used. The number of blocks r
 \end{equation}
 This ensures that enough threads are launched to cover all simulation paths while still allowing the grid-stride loop to handle larger workloads efficiently.
 
-\subsection{Why the Explicit Solver Can Also Benefit}\label{sec:ExplicitGPU}
-stencil operation and extern shared.....
-\subsection{Benchmark Setup}
-\subsection{Performance Metrics}
 
-\section{Design}
-The design process of my application followed the workflow shown in Figure~\ref{fig:design_process}. The first stage, \textit{Plan on Paper}, involved designing the solution on paper. This included solving equations by hand, such as the explicit solution to the BSE in \ref{eq:exp}, discretising the GBM, and planning the overall code implementation.
+\subsection{Why the Explicit Solver Can Also Benefit}\label{sec:ExplicitGPU}
+
+Although Monte Carlo is the more obvious candidate for GPU acceleration, the explicit finite difference solver can also benefit from CUDA because each time level contains a large
+number of independent spatial updates. From Equation~\ref{eq:exp}, the value at grid point $i$ only depends on the three neighbouring values from the next time level:
+\begin{equation}
+V_i^k = A_i V_{i-1}^{k+1} + B_i V_i^{k+1} + C_i V_{i+1}^{k+1}.
+\end{equation}
+This is a three-point stencil operation. For a fixed time step $k$, every interior point $i=1,\ldots,M-1$ can be computed independently once the previous row, $V^{k+1}$, is
+known. The dependency between time levels means that the outer loop over time steps must remain sequential, but the inner loop over spatial grid points is data parallel.
+
+This structure is reflected in the CUDA implementation. The function \texttt{priceBlackScholesExplicitCall} allocates two one-dimensional device vectors, \texttt{currentValues}
+and \texttt{nextValues}, instead of storing the full two-dimensional grid. The terminal payoff is first written by \texttt{terminalConditionKernel}. The main time-stepping loop
+then launches \texttt{fillInteriorKernel} once per time level and swaps the two buffers after each launch.
+
+Inside \texttt{fillInteriorKernel}, each thread computes one spatial index using
+\begin{verbatim}
+index = blockIdx.x * blockDim.x + threadIdx.x;
+\end{verbatim}
+and then applies the stencil
+\begin{verbatim}
+nextValues[index] =
+    a * currentValues[index - 1]
++ b * currentValues[index]
++ c * currentValues[index + 1];
+\end{verbatim}
+
+The boundary nodes are handled separately in the same kernel. The left boundary is fixed at zero for a call option, while the right boundary uses the asymptotic call value
+\begin{verbatim}
+sMax - strikeK * expf(-riskFreeRate * tau)
+\end{verbatim}
+This matches the boundary conditions introduced for the explicit method while allowing the expensive interior update to be distributed across many GPU threads.
+
+The first CUDA version uses global memory for the stencil reads. This already gives parallelism, but it also creates repeated memory traffic. Adjacent threads require overlapping
+data: thread $i$ reads \texttt{currentValues[i - 1]}, \texttt{currentValues[i]}, and \texttt{currentValues[i + 1]}, while thread $i+1$ reads two of those same values again. A
+shared-memory version reduces this repeated global-memory access by staging a tile of \texttt{currentValues} in block-local memory. In CUDA this can be written using dynamically
+allocated shared memory:
+\begin{verbatim}
+extern __shared__ float tile[];
+\end{verbatim}
+
+Each block loads its own contiguous section of the row into \texttt{tile}. Because the stencil also needs neighbouring values, the block must also load one halo value on the left
+and one halo value on the right. After a \texttt{\_\_syncthreads} barrier, each thread can read most of its stencil values from shared memory rather than repeatedly reading them
+from global memory. The update is mathematically identical to the global-memory kernel; the optimisation changes where the row values are read from, not the finite difference
+scheme itself.
+
+The explicit solver is therefore less parallel than Monte Carlo across the full computation because time steps cannot be evaluated out of order. However, each time step exposes
+substantial spatial parallelism, and the repeated three-point stencil makes memory locality important. This explains why both the global-memory and shared-memory CUDA
+implementations are useful benchmarks: the global version measures the benefit of parallelising the spatial update, while the shared-memory version measures the additional
+benefit of reducing repeated global-memory reads within each stencil tile.
+
+\chapter{Benchmarking \& Results}\label{sec:Benchmarks}
+\subsection{Benchmarking Methodology}
+
+The project benchmarks the CUDA implementations using CUDA events. CUDA events are recorded on the GPU execution stream and the elapsed time between two events is reported in
+milliseconds. This is more appropriate than a CPU wall-clock timer for CUDA kernels because kernel launches are asynchronous: the CPU can
+continue execution before the GPU work has completed. By recording a start event before the measured GPU work and a stop event after it, then synchronising on the stop event, the
+program ensures that the reported time corresponds to completed CUDA work.
+
+For the Monte Carlo method, timing is performed in \texttt{runMonteCarloCall}. A CUDA start event is recorded immediately before the call to \texttt{monteCarlo}, and a stop event
+is recorded after \texttt{cudaDeviceSynchronize}. The timed section therefore covers the main GPU-side Monte Carlo payoff generation workflow: device vector setup, cuRAND normal
+random number generation, and the CUDA kernel that computes discounted call payoffs.
+
+\ps{fix below}
+For the explicit finite-difference Black--Scholes method, timing is performed inside \texttt{priceBlackScholesExplicitCall}. The setup phase computes the grid bounds, number of
+spatial nodes, number of time steps, time-step size, and allocates the device vectors. The terminal payoff condition is also initialised before the timed region. The CUDA start
+event is then recorded immediately before the backwards time-stepping loop. Each iteration launches \texttt{fillInteriorKernel}, which updates the option values across the
+spatial grid for one time level. After all time steps have been launched, the stop event is recorded and synchronised. The reported value, printed as \texttt{Time-Step Kernel
+Loop (ms)}, therefore measures only the repeated finite-difference kernel loop. It excludes grid construction, memory allocation, terminal-condition initialisation, copying the
+final grid back to the host, and interpolation of the final option price.
+
+All benchmarks for CPU implementations were ran on a system equipped with an Intel Core i7 CPU clocked at 2.30 GHz 
+and for CUDA benchmarks an NVIDIA A40 GPU was used.
+Speed--up is measured using the general relation
+\begin{equation}
+  \text{speedup} = \frac{t_{\text{baseline}}}{t_{\text{optimised}}}
+\end{equation}
+where $t_{\text{baseline}}$ denotes the runtime of the reference 
+implementation and $t_{\text{optimised}}$ denotes the runtime of the 
+accelerated implementation. For the Python benchmarks, the optimised implementation is the Numba version,
+while for GPU benchmarks it is the CUDA version.
+
+For benchmarking purposes, the option priced is 
+a European Call Option with stock price $S_0 = \$274.80$, 
+strike price $K = \$275.00$, time to expiry $T = 0.0548$, 
+volatility $\sigma = 0.1730$, and risk-free rate $r = 0.0375$.
+The main factor which changed was $\Delta S$.
+
+\section{Python Benchmarking}\label{sec:PythonBenchmarks}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{||c c c c||}
+ \hline
+ Spatial Step & CPU (ms) & Numba (ms) & Speed-up  \\ [0.5ex]
+ \hline\hline
+ 3     & 28,585 & 2056 & 13.903 \\
+ \hline
+ 1.5   & 53,345 & 681 & 78.33 \\
+ \hline
+ 0.75  & 116,519 & 569 & 204.778  \\
+ \hline
+ 0.375 & 273,270 & 1139 & 239.9 \\
+ \hline
+\end{tabular}
+\caption{Runtime comparison between the pure Python and Numba implementations of the explicit finite difference solver.}
+\label{tab:numba-benchmark}
+\end{table}
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/design_process.png}
-    \caption{Design process}
-    \label{fig:design_process}
+  \centering
+  \input{tikz/spatialVsTime.tex}
+  \caption{Computation time of the explicit finite difference method as the grid is refined.}
+  \label{fig:NumbaBenchmark}
+\end{figure}
+Table~\ref{tab:numba-benchmark} shows that the Numba implementation significantly outperforms the pure Python baseline. As the grid is refined the computational cost for both implementations significantly increases. However, the Python implementation scales much less efficiently as the nested loop updates incur significant overhead. In contrast, Numba compiles these loops to efficient machine code, leading to much lower runtimes with a 239.9x speed up when $\Delta S=0.375$. The slight increase in between $\Delta S = 0.75$ and $\Delta S = 0.375$ can be attributed to the larger grid exceeding the CPU cache capacity.
+
+
+\section{Explicit}
+\ps{Mention grid size}
+
+\begin{center}\label{tbl:sharedVs_Global}
+\begin{tabular}{||c c c c ||} 
+ \hline
+ Spatial Step & GPU Global (ms) & GPU Shared (ms) & Speed up \\ [0.5ex]
+ \hline\hline
+ 3      & 287.078 & 193.666 & 1.482 \\ 
+ \hline
+ 1.5   & 290.095 & 189.912 & 1.527 \\
+ \hline
+ 0.75  &  290.604 & 215.09 & 1.351 \\
+ \hline
+ 0.375 & 287.748 & 289.426 & 0.9942\\
+ \hline
+\end{tabular}
+\end{center}
+
+Table \ref{tbl:sharedVs_Global} compares the speed up of Global memory vs shared memory.
+On a smaller grid shared memory gives a strong speedup of $1.5 \times$.
+Each thread block fits comfortablly into shared memory. However, as the
+grid size begins to increase shared memory begins to lose its edge. 
+This can be attributed to a number of reasons. Firstly, 
+if each block uses shared memory then fewer blocks can run 
+concurrently reducing the GPU's ability to hide memory latency through parallelism.
+Shared memory capacity is limited (100Kb per SM on the nvidia A40). 
+A finer grid means larger tiles are needed to cover the domain, which may exceed what fits in shared memory per block.
+\begin{figure}[H]
+  \centering
+  \input{tikz/spatialVsTimeGPU.tex}
+  \caption{GPU runtime comparison as the spatial grid is refined. Blue: GPU global memory; orange: GPU shared memory.}
+  \label{fig:spatial-time-gpu}
 \end{figure}
 
-Once the plan had reached an acceptable stage, the next step was to use Jupyter notebooks and Google Colab for rapid prototyping and validation of results. This made it easy to test different implementations and libraries without extensive setup. The stochastic component of the code made it hard to test certain code components which ruled out using methodologies like \ref{TDD INSERT REFERENCE, TESTING IS DISUCSSED IN INSERT SECTION}. The use of Jupyter notebooks meant I was able to verify visually that my results where accurate.
-I refined the code to ensure it was both accurate and functional before moving to the \textit{Python Code Stage}. This stage involved transferring the code from the Jupyter notebook into the project folder and improving an already working implementation. It also provided the benefit of version control. Since a main goal of the project is to measure the efficiency and speed of the code, it was important to optimise it carefully. At this stage, tests were also introduced to ensure that no regressions were introduced. It also became easier to generate plots, since they could be exported as \textit{tex} files and imported directly into the dissertation.
+Although the shared memory implementation did not maintain its performance advantage at 
+finer spatial resolutions, it remains a strong candidate for
+latency-sensitive workloads, reducing global memory traffic 
+through data reuse, and scenarios where energy efficiency or 
+memory bandwidth are the primary bottleneck rather than raw throughput~\cite{mei2016dissectinggpumemoryhierarchy}.
 
-Once the Python implementation was complete, I moved on to CUDA. Although the Python code could not be translated directly into CUDA, understanding the implementation in Python made it easier to develop the CUDA version. The CUDA code was then continually optimised to improve performance. Once the code had reached an acceptable stage, it was benchmarked and the results were plotted in Python.
+These results can be combined with the results from ealier sections~\ref{sec:explicit} and~\ref{sec:PythonOpt}
+\begin{figure}[H]
+  \centering
+  \input{tikz/spatialVsTimeCombined.tex}
+  \caption{Runtime comparison as the spatial grid is refined. Blue: Python; orange: Numba; green: GPU global memory; red: GPU shared memory.}
+  \label{fig:spatial-time-combined}
+\end{figure}
 
-\chapter{Implementation}
-\ps{Graphs and benchmarks will be moved to relevant section same for testing}
-The implementation of this section can be split into two distinct sections
-The initial CPU implementation written in Python and tested in pytest
-and the CUDA implementation written in C++ and tested in ...
-\section{Testing}
-Although there is a stochastic component to the code written which makes it hard to test as the output isn't deterministic.
-
-Testing can be split into two components
-- For testing the stoch part I used jupyter notebooks. to visually veirfy the result. 
-- I wrote unit tests for the solver in pytest
-\section{System Evaluation and Experimental Results}
-
-
-
-For benchmarking purposes, the options being priced are as follows
-\begin{center}
-\begin{tabular}{||c c c c c||} 
- \hline
-  $\sigma$ & $r$ & $K$ & $S_t$ & $T$ \\ [0.5ex]
- \hline\hline
- 0.2 & 0.05 & 100 & 100 & 1.0 \\ 
- \hline
-\end{tabular}
-\end{center}
-The option considered for benchmarking has volatility $\sigma = 0.2$ (20\%), a risk-free interest rate of $r = 0.05$ (5\%), current stock price $S_t = 100$, strike price $K = 100$, and time to maturity $T = 1.0$ year.
-
-\begin{center}
-\begin{tabular}{||c c ||} 
- \hline
- Parameter & Value \\ [0.5ex] 
- \hline\hline
- Strike (K) & 100  \\ 
- \hline
- Risk-free rate($r$) & 0.05  \\
- \hline
- Volatility ($\sigma$) & 0.20 \\
- \hline
-\end{tabular}
-\end{center}
-
-
-\begin{center}
-\begin{tabular}{||c c c c||} 
- \hline
- S & Moneyness & Call Price & Put Price \\ [0.5ex] 
- \hline\hline
- 80 & Deep OTM call & 1.86 & 16.98 \\ 
- \hline
- 90 & OTM call & 5.10 & 10.20 \\
- \hline
- 100 & ATM & 10.45 & 5.57 \\
- \hline
- 110 & ITM call & 17.68 & 2.79 \\
- \hline
- 120 & Deep ITM call & 26.16 & 1.30 \\ [1ex] 
- \hline
-\end{tabular}
-\end{center}
-
-
-\begin{center}
-\begin{tabular}{||c c c ||} 
- \hline
- T & Call Price & Put Price \\ [0.5ex] 
- \hline\hline
- 0.25   & 4.60 & 3.37 \\ 
- \hline
- 0.50  & 6.88 & 4.43 \\
- \hline
- 1.00 & 10.45 & 5.57 \\
- \hline
-\end{tabular}
-\end{center}
-With grid a grid size of 50,000
-\begin{center}
-\begin{tabular}{||c c c c c||} 
- \hline
- Spatial Step & CPU (ms) & Numba (ms) & GPU Global (ms) & GPU Shared (ms) \\ [0.5ex]
- \hline\hline
- 3     & 28,585 & 2056 & 287.078 & 193.666 \\ 
- \hline
- 1.5   & 53,345 & 681 & 290.095 & 189.912 \\
- \hline
- 0.75  & 116,519 & 569 &  290.604 & 215.09 \\
- \hline
- 0.375 & 273,270 & 1139 & 287.748 & 289.426 \\
- \hline
-\end{tabular}
-\end{center}
-\input{tikz/spatialVsTime.tex}
-\input{tikz/spatialVsTimeGPU.tex}
-
+The speeds up between both CPU and GPU implementations is outlined below. 
 \begin{center}
 \begin{tabular}{||c c c||} 
  \hline
@@ -843,8 +897,28 @@ With grid a grid size of 50,000
  \hline
 \end{tabular}
 \end{center}
+Overall, the GPU comes out on top achieveing significant speed up against the CPU.
+Even the baseline implementation appears outperform both Python implementations. 
+Although there isn't a 
 
-- Also add monte carlo as well as grid sizes for benchmarking., 
+\begin{center}
+\begin{tabular}{||c c c c c||} 
+ \hline
+ Spatial Step & CPU (ms) & Numba (ms) & GPU Global (ms) & GPU Shared (ms) \\ [0.5ex]
+ \hline\hline
+ 3     & 28,585 & 2056 & 287.078 & 193.666 \\ 
+ \hline
+ 1.5   & 53,345 & 681 & 290.095 & 189.912 \\
+ \hline
+ 0.75  & 116,519 & 569 &  290.604 & 215.09 \\
+ \hline
+ 0.375 & 273,270 & 1139 & 287.748 & 289.426 \\
+ \hline
+\end{tabular}
+\end{center}
+
+\section{Monte Carlo}\label{sec:MCBencmark}
+Monte Carlo was also benchmarked against the CPU implementation 
 
 \begin{center}
 \begin{tabular}{||c c c c c ||} 
@@ -865,11 +939,103 @@ With grid a grid size of 50,000
  \hline
 \end{tabular}
 \end{center}
-\input{tikz/cpuVsGPUMCarlo.tex}
+\begin{figure}[H]
+  \centering
+  \input{tikz/cpuVsGPUMCarlo.tex}
+  \caption{Monte Carlo runtime comparison as the number of paths increases. Blue: Python; orange: GPU.}
+  \label{fig:cpu-gpu-monte-carlo-runtime}
+\end{figure}
 
-\begin{align}
-  speedup = \frac{t_{CPU}}{t_{GPU}}
-\end{align}
+Table \ref{fig:cpu-gpu-monte-carlo-runtime} presents the CPU vs GPU times at various grid sizes.
+At smaller grid sizes the GPU performs worse than the CPU.
+This can be attributed to the overhead costs of launching the kernel
+and memory transfer between the host and device. 
+
+As the grid size increaes the CPU scales lineraly
+while GPU remains stable. The near-constant GPU runtime 
+across increasing path counts indicates that the workload
+is effectively saturating available parallelism. 
+This suggests that the kernel is compute-bound rather 
+than memory-bound for larger problem sizes.
+
+Beyond $2^{20}$ elements of the GPU demonstrated increasingly substantial speed-ups, 
+reaching $181.78\times$ at $2^{25}$
+This behaviour is consistent with the GPU's massively parallel 
+architecture, where thousands of threads execute simultaneously,
+meaning that increasing the problem size primarily increases 
+thread utilisation rather than execution time. 
+
+\section{Design}
+The design process of my application followed the workflow shown in Figure~\ref{fig:design_process}. The first stage, \textit{Plan on Paper}, involved designing the solution on paper. This included solving equations by hand, such as the explicit solution to the BSE in \ref{eq:exp}, discretising the GBM, and planning the overall code implementation.
+\begin{figure}[H]
+    \centering
+    \resizebox{0.72\textwidth}{!}{\input{tikz/design_process.tex}}
+    \caption{Design process}
+    \label{fig:design_process}
+\end{figure}
+
+
+Once the plan had reached an acceptable stage, the next step was to use Jupyter notebooks and Google Colab for rapid prototyping and validation of results. This made it easy to test different implementations and libraries without extensive setup. The stochastic component of the code made it hard to test certain code components, which ruled out using methodologies such as strict test-driven development. The use of Jupyter notebooks meant I was able to verify visually that my results were accurate.
+I refined the code to ensure it was both accurate and functional before moving to the \textit{Python Code Stage}. This stage involved transferring the code from the Jupyter notebook into the project folder and improving an already working implementation. It also provided the benefit of version control. Since a main goal of the project is to measure the efficiency and speed of the code, it was important to optimise it carefully. At this stage, tests were also introduced to ensure that no regressions were introduced. It also became easier to generate plots, since they could be exported as \textit{tex} files and imported directly into the dissertation.
+
+Once the Python implementation was complete, I moved on to CUDA. Although the Python code could not be translated directly into CUDA, understanding the implementation in Python made it easier to develop the CUDA version. The CUDA code was then continually optimised to improve performance. Once the code had reached an acceptable stage, it was benchmarked and the results were plotted in Python.
+
+
+The design process for \ps{ref heston section} followed a slightly different pattern. 
+\begin{figure}[H]
+    \centering
+    \resizebox{0.72\textwidth}{!}{\input{tikz/design_process_heston.tex}}
+    \caption{Design process}
+    \label{fig:hest_design}
+\end{figure}
+
+The initial \textit{Plan} stage involved designing the PyMC 
+evaluator on paper. The evaluator was then implemented in 
+Python using the \textit{PyMC} library. The subsequent 
+\textit{Develop OpenEvolve} stage consisted of several steps.
+First, the PyMC model was moved into \texttt{initial\_program},
+the Python file that is mutated by OpenEvolve.
+Next, the evaluator was implemented according to 
+the metric outlined in \ref{sec:mcmc_evaluation} 
+and the \texttt{config.yaml} 
+file was developed to include the system prompt.
+
+One limiting factor was cost, since running 
+OpenEvolve with large language models such as ChatGPT 
+or Gemini incurs API charges. To test the evaluator 
+more affordably, Kelvin2 was used. 
+The large amount of available compute made it possible to 
+run local models such as Qwen, which performs strongly on 
+mathematics benchmarks \cite{qwen36_35b_a3b}. 
+Each PyMC run still required a considerable amount of 
+time, depending on the number of iterations used. 
+Submitting jobs through Kelvin2 made it possible 
+to queue multiple runs and execute them asynchronously.
+
+After many iterations of refining the evaluator,
+the final \textit{Run with SOTA LLM} stage was 
+carried out. The state-of-the-art (SOTA) models used at this 
+stage were a combination of Gemini and ChatGPT. 
+Once the runs had completed, the results were 
+collected and plotted.
+\section{Testing}
+Although there is a stochastic component to the code written which makes it hard to test as the output isn't deterministic.
+For both repositories \cite{heston_estimator} and 
+\cite{yalcin_finalyearproject}, testing followed
+same structure. Unit test were written for the code, 
+then integration test were written. Unit tests covered
+the individual functions such as the application of
+boundary conditions to the grid for \ps{ref the section it includes.}
+or the scoring functions in \ps{test}.
+Integration tests then tested the covered functions interacting
+together. For example the price of the \ps{mention integration tests}
+A GitHub workflow was then created which runs the tests
+when code is pushed to the repo. This prevents regression
+
+Additionally, the use of matplotlib library made it easy to
+manually test parts of my code, while developing.
+The unit and integration tests developed can be found in the appendix.
+\ps{The full table of tests and outcomes has been defered to appendix}
 
 \chapter{Extension to the Heston Model}
 The Heston model is a widely used nonlinear stochastic volatility model, 
@@ -1698,6 +1864,9 @@ First, the approach could be benchmarked against established state-space estimat
 
 \chapter{System Requirements and Specifications}
 The key goals of this project can be split into two distinct sections.
+Firstly the requirements for the explicit solver, covering cuda python and...
+
+As well as the requirements of the 
 
 Firstly is the development of a solver for the Black Scholes PDE using the,
 Explicit FDM. The requirements are as follows:
@@ -1728,8 +1897,8 @@ Second, is the development of a repository for parameter estimation of the Hesto
 evaluator for Openevolve \ps{WIP}. The requirements are as follows:
 \begin{table}
     \centering
-\caption{Scores of best program of stock market data}
-\label{tab:stock:scores}
+\caption{Project requirements for the Heston parameter estimation repository}
+\label{tab:heston-repository-requirements}
 \begin{tabular}{lccc}
 \hline
 Requirement                 & Type & Verification\\
@@ -1750,20 +1919,198 @@ Optimize the CUDA implementation           & 0.827 & \\
 \end{tabular}
 \end{table}
 
-\chapter{Design}
-
-
-
-\chapter{Testing}
-\chapter{System Evaluation and Experimental Results}
-
-
-
 
 \bibliographystyle{plain}
 \bibliography{bibliography}
 \chapter{Appendices}
 
-\section{Appendices}
+\section{Tests}
+
+
+
+\section*{Automated Test Summary}
+
+The automated test suite was run with
+\texttt{python -m unittest discover -s heston-openevolve\textbackslash tests -p "test\_*.py"}.
+All 14 tests completed successfully.
+
+\begin{table}[htbp]
+\centering
+\caption{Unit test descriptions and outcomes}
+\label{tab:unit-tests}
+\small
+\begin{tabularx}{\textwidth}{|T|D|O|}
+\hline
+\textbf{Unit test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\texttt{test\_\allowbreak derive\_\allowbreak seed\_\allowbreak is\_\allowbreak stable\_\allowbreak and\_\allowbreak label\_\allowbreak sensitive}
+& Verifies that derived random seeds are deterministic for the same labels, change when labels change, and remain inside the valid integer range.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak safe\_\allowbreak float\_\allowbreak rejects\_\allowbreak nan\_\allowbreak inf\_\allowbreak and\_\allowbreak bad\_\allowbreak values}
+& Checks that invalid numerical values such as NaN, infinity, strings, and malformed inputs are converted to a safe zero value, while valid floats are preserved.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak load\_\allowbreak price\_\allowbreak observations\_\allowbreak from\_\allowbreak named\_\allowbreak csv\_\allowbreak column}
+& Confirms that price data can be read from a named CSV column and that zero, NaN, and non-positive entries are filtered out.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak load\_\allowbreak price\_\allowbreak observations\_\allowbreak from\_\allowbreak headerless\_\allowbreak csv}
+& Confirms that headerless CSV price data is parsed correctly and that invalid or non-positive values are removed.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak simulate\_\allowbreak price\_\allowbreak observations\_\allowbreak uses\_\allowbreak csv\_\allowbreak tail}
+& Verifies that simulated price observations use the configured CSV source and return the requested tail segment of the series.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak heston\_\allowbreak simulator\_\allowbreak is\_\allowbreak seed\_\allowbreak deterministic\_\allowbreak and\_\allowbreak finite}
+& Checks that the Heston simulator returns a finite path of the requested length and produces deterministic output for a fixed seed.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak smooth\_\allowbreak clamp\_\allowbreak np\_\allowbreak keeps\_\allowbreak values\_\allowbreak above\_\allowbreak floor}
+& Ensures that the smooth clamp keeps all values above the specified numerical floor while preserving ordering behavior.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak sample\_\allowbreak params\_\allowbreak draws\_\allowbreak required\_\allowbreak posterior\_\allowbreak variables}
+& Verifies that posterior samples are drawn for the required Heston parameters: \texttt{mu}, \texttt{kappa}, \texttt{theta}, \texttt{xi}, and \texttt{y0}.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak eval\_\allowbreak divergence\_\allowbreak scores\_\allowbreak zero\_\allowbreak and\_\allowbreak deal\_\allowbreak breaker\_\allowbreak cases}
+& Checks that divergence diagnostics give a perfect score when there are no divergences and flag the expected deal-breaker case when divergences are high.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak eval\_\allowbreak rhat\_\allowbreak uses\_\allowbreak max\_\allowbreak rhat\_\allowbreak for\_\allowbreak score\_\allowbreak and\_\allowbreak deal\_\allowbreak breaker}
+& Confirms that the R-hat diagnostic uses the maximum reported R-hat value to calculate the score and to detect a deal-breaker threshold breach.
+& Passed \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Integration test descriptions and outcomes}
+\label{tab:integration-tests}
+\small
+\begin{tabularx}{\textwidth}{|T|D|O|}
+\hline
+\textbf{Integration test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\texttt{test\_\allowbreak data\_\allowbreak csv\_\allowbreak run\_\allowbreak contains\_\allowbreak required\_\allowbreak evaluator\_\allowbreak groups}
+& Loads the saved \texttt{data\_csv\_run.nc} inference fixture and confirms that required posterior and sample-statistic groups are present.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak sample\_\allowbreak params\_\allowbreak reads\_\allowbreak posterior\_\allowbreak from\_\allowbreak data\_\allowbreak csv\_\allowbreak run}
+& Draws parameter samples from the saved inference data and checks that sample arrays are finite, correctly shaped, and positive where required.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak diagnostics\_\allowbreak accept\_\allowbreak data\_\allowbreak csv\_\allowbreak run\_\allowbreak inference\_\allowbreak data}
+& Runs divergence, R-hat, and effective sample size diagnostics against the saved inference data and checks that returned scores and metrics are valid.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak eval\_\allowbreak ppc\_\allowbreak runs\_\allowbreak small\_\allowbreak replicate\_\allowbreak count\_\allowbreak with\_\allowbreak data\_\allowbreak csv\_\allowbreak run\_\allowbreak posterior}
+& Runs a small posterior predictive check using parameters sampled from the saved inference data and verifies that the score is finite and bounded between zero and one.
+& Passed \\
+\hline
+\end{tabularx}
+\end{table}
+
+
+\section*{Test Summary}
+
+The following tables summarise the unit and integration tests in the Python
+test suite. The recorded outcome is based on running:
+\texttt{python -m pytest tests -q}. The full suite passed with 22 tests.
+
+\subsection*{Unit Tests}
+
+\begin{table}[htbp]
+\centering
+\caption{Unit test descriptions and outcomes}
+\label{tab:pytest-unit-tests}
+\small
+\begin{tabularx}{\textwidth}{|T|D|O|}
+\hline
+\textbf{Unit test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\texttt{test\_\allowbreak number\_\allowbreak of\_\allowbreak days\_\allowbreak asset\_\allowbreak level\_\allowbreak returns\_\allowbreak zero\_\allowbreak float64\_\allowbreak grid}
+& Verifies that the BSE grid constructor returns a zero-filled NumPy array with the expected shape and \texttt{float64} dtype.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak call\_\allowbreak boundary\_\allowbreak helpers\_\allowbreak apply\_\allowbreak expected\_\allowbreak values}
+& Checks that the call-option BSE boundary and terminal condition helpers set the left boundary, maturity payoff, and right boundary correctly.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak put\_\allowbreak boundary\_\allowbreak helpers\_\allowbreak apply\_\allowbreak expected\_\allowbreak values}
+& Checks that the put-option BSE boundary and terminal condition helpers set the left boundary, right boundary, and maturity payoff correctly.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak geometric\_\allowbreak brownian\_\allowbreak motion\_\allowbreak uses\_\allowbreak expected\_\allowbreak path\_\allowbreak formula}
+& Uses fixed Brownian increments to confirm that full GBM paths follow the expected closed-form time-step formula.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak geometric\_\allowbreak brownian\_\allowbreak motion\_\allowbreak zero\_\allowbreak volatility\_\allowbreak is\_\allowbreak deterministic}
+& Confirms that GBM paths reduce to deterministic exponential growth when volatility is zero.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak european\_\allowbreak option\_\allowbreak payoff}
+& Verifies call and put payoff calculations, including upper-case option type inputs.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak european\_\allowbreak option\_\allowbreak payoff\_\allowbreak rejects\_\allowbreak unknown\_\allowbreak option\_\allowbreak type}
+& Confirms that invalid option types raise a clear \texttt{ValueError}.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak simulate\_\allowbreak terminal\_\allowbreak prices\_\allowbreak uses\_\allowbreak closed\_\allowbreak form\_\allowbreak gbm\_\allowbreak distribution}
+& Uses fixed standard-normal draws to verify terminal GBM prices are sampled from the closed-form distribution.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak gbm\_\allowbreak lognormal\_\allowbreak pdf\_\allowbreak matches\_\allowbreak formula\_\allowbreak and\_\allowbreak zeros\_\allowbreak nonpositive\_\allowbreak values}
+& Confirms the GBM lognormal PDF matches the analytical formula and returns zero density for non-positive prices.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak gbm\_\allowbreak lognormal\_\allowbreak pdf\_\allowbreak returns\_\allowbreak zeros\_\allowbreak when\_\allowbreak all\_\allowbreak values\_\allowbreak are\_\allowbreak nonpositive}
+& Verifies the lognormal PDF helper safely returns zeros when every input price is non-positive.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak normal\_\allowbreak pdf\_\allowbreak matches\_\allowbreak standard\_\allowbreak formula}
+& Checks that the normal PDF helper matches the standard normal density formula.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak option\_\allowbreak price\_\allowbreak from\_\allowbreak terminal\_\allowbreak prices\_\allowbreak discounts\_\allowbreak mean\_\allowbreak payoff\_\allowbreak and\_\allowbreak std\_\allowbreak error}
+& Verifies discounted Monte Carlo pricing and standard-error calculations for both call and put payoffs.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak monte\_\allowbreak carlo\_\allowbreak option\_\allowbreak price\_\allowbreak uses\_\allowbreak simulated\_\allowbreak terminal\_\allowbreak prices}
+& Uses fixed random draws to confirm single-option Monte Carlo pricing uses the simulated terminal prices correctly.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak monte\_\allowbreak carlo\_\allowbreak call\_\allowbreak put\_\allowbreak prices\_\allowbreak use\_\allowbreak same\_\allowbreak terminal\_\allowbreak draws}
+& Confirms paired call and put Monte Carlo estimates are computed from the same simulated terminal price sample.
+& Passed \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection*{Integration Tests}
+
+\begin{table}[htbp]
+\centering
+\caption{Integration test descriptions and outcomes}
+\label{tab:pytest-integration-tests}
+\small
+\begin{tabularx}{\textwidth}{|T|D|O|}
+\hline
+\textbf{Integration test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\texttt{test\_\allowbreak explicit\_\allowbreak solver\_\allowbreak prices\_\allowbreak match\_\allowbreak black\_\allowbreak scholes\_\allowbreak at\_\allowbreak spot}
+& Runs the explicit finite-difference BSE call and put solvers end-to-end, validates the generated time and asset grids, checks boundary conditions, and compares the spot price against the analytical Black--Scholes value.
+& Passed \\
+\hline
+\texttt{test\_\allowbreak seeded\_\allowbreak monte\_\allowbreak carlo\_\allowbreak price\_\allowbreak converges\_\allowbreak to\_\allowbreak black\_\allowbreak scholes}
+& Runs seeded Monte Carlo call and put pricing end-to-end and verifies the simulated prices converge to analytical Black--Scholes values within a tolerance based on the simulated standard error.
+& Passed \\
+\hline
+\end{tabularx}
+\end{table}
 
 \end{document}
