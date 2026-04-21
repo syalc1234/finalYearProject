@@ -26,6 +26,8 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{needspace}
 \usepackage{caption}
 
 \usepackage[english]{babel}
@@ -44,6 +46,13 @@
 \newcolumntype{T}{>{\raggedright\arraybackslash}p{0.34\textwidth}}
 \newcolumntype{D}{>{\raggedright\arraybackslash}X}
 \newcolumntype{O}{>{\raggedright\arraybackslash}p{0.16\textwidth}}
+\newcolumntype{R}{>{\raggedright\arraybackslash}p{0.11\textwidth}}
+\newcolumntype{Q}{>{\raggedright\arraybackslash}p{0.18\textwidth}}
+\newcolumntype{W}{>{\raggedright\arraybackslash}p{0.45\textwidth}}
+\newcolumntype{P}{>{\raggedright\arraybackslash}p{0.11\textwidth}}
+\newcolumntype{U}{>{\raggedright\arraybackslash}p{0.30\textwidth}}
+\newcolumntype{V}{>{\raggedright\arraybackslash}p{0.45\textwidth}}
+\newcolumntype{Z}{>{\raggedright\arraybackslash}p{0.10\textwidth}}
 \providecommand{\tikzsetnextfilename}[1]{}
 
 \begin{document}
@@ -149,7 +158,6 @@ By submitting your dissertation you declare that you have completed the tutorial
 \newpage
 
 \chapter{Introduction and Problem Area}
-\ps{Roman numerals}
 \chapter{Background}
 \section{The Geometric Brownian Motion}
 Financial asset prices are inherently uncertain and capturing their stochastic behaviour is central to finance, particularly in pricing derivatives. 
@@ -826,7 +834,7 @@ The main factor which changed was $\Delta S$.
 \begin{figure}[H]
   \centering
   \input{tikz/spatialVsTime.tex}
-  \caption{Computation time of the explicit finite difference method as the grid is refined.}
+  \caption{Runtime vs spatial step $\Delta S$}
   \label{fig:NumbaBenchmark}
 \end{figure}
 Table~\ref{tab:numba-benchmark} shows that the Numba implementation significantly outperforms the pure Python baseline. As the grid is refined the computational cost for both implementations significantly increases. However, the Python implementation scales much less efficiently as the nested loop updates incur significant overhead. In contrast, Numba compiles these loops to efficient machine code, leading to much lower runtimes with a 239.9x speed up when $\Delta S=0.375$. The slight increase in between $\Delta S = 0.75$ and $\Delta S = 0.375$ can be attributed to the larger grid exceeding the CPU cache capacity.
@@ -863,7 +871,7 @@ A finer grid means larger tiles are needed to cover the domain, which may exceed
 \begin{figure}[H]
   \centering
   \input{tikz/spatialVsTimeGPU.tex}
-  \caption{GPU runtime comparison as the spatial grid is refined. Blue: GPU global memory; orange: GPU shared memory.}
+  \caption{Runtime vs spatial step $\Delta S$. Blue: GPU global memory; orange: GPU shared memory.}
   \label{fig:spatial-time-gpu}
 \end{figure}
 
@@ -874,12 +882,6 @@ through data reuse, and scenarios where energy efficiency or
 memory bandwidth are the primary bottleneck rather than raw throughput~\cite{mei2016dissectinggpumemoryhierarchy}.
 
 These results can be combined with the results from ealier sections~\ref{sec:explicit} and~\ref{sec:PythonOpt}
-\begin{figure}[H]
-  \centering
-  \input{tikz/spatialVsTimeCombined.tex}
-  \caption{Runtime comparison as the spatial grid is refined. Blue: Python; orange: Numba; green: GPU global memory; red: GPU shared memory.}
-  \label{fig:spatial-time-combined}
-\end{figure}
 
 The speeds up between both CPU and GPU implementations is outlined below. 
 \begin{center}
@@ -899,7 +901,7 @@ The speeds up between both CPU and GPU implementations is outlined below.
 \end{center}
 Overall, the GPU comes out on top achieveing significant speed up against the CPU.
 Even the baseline implementation appears outperform both Python implementations. 
-Although there isn't a 
+The full 
 
 \begin{center}
 \begin{tabular}{||c c c c c||} 
@@ -1019,23 +1021,22 @@ stage were a combination of Gemini and ChatGPT.
 Once the runs had completed, the results were 
 collected and plotted.
 \section{Testing}
-Although there is a stochastic component to the code written which makes it hard to test as the output isn't deterministic.
-For both repositories \cite{heston_estimator} and 
-\cite{yalcin_finalyearproject}, testing followed
-same structure. Unit test were written for the code, 
-then integration test were written. Unit tests covered
-the individual functions such as the application of
-boundary conditions to the grid for \ps{ref the section it includes.}
-or the scoring functions in \ps{test}.
+For both repositories~\cite{heston_estimator} and~\cite{yalcin_finalyearproject}, 
+testing followed a similar structure. Unit test were written for 
+the individual functions within the code, 
+then integration test were written to cover interactions within the code.
+Unit tests covered the individual functions such as the application of
+boundary conditions to the grid in the Explict solution
+or scoring of candidate programs.
 Integration tests then tested the covered functions interacting
-together. For example the price of the \ps{mention integration tests}
+together. For example checking the price of an option produced by
+Monte Carlo Simulations vs the closed form solution.
 A GitHub workflow was then created which runs the tests
 when code is pushed to the repo. This prevents regression
 
-Additionally, the use of matplotlib library made it easy to
-manually test parts of my code, while developing.
-The unit and integration tests developed can be found in the appendix.
-\ps{The full table of tests and outcomes has been defered to appendix}
+THroughout the development process manual testing was conducting
+using the matplotlib library results were visualised. 
+The unit and integration tests developed can be found in the appendix~\ref{apex:tests}.
 
 \chapter{Extension to the Heston Model}
 The Heston model is a widely used nonlinear stochastic volatility model, 
@@ -1611,7 +1612,7 @@ implying a log-normal prior on $v_0$.
 In this section we show the application of the above 
 methodology to two case studies. In Section \ref{sec:results:synthetic}
 we use synthetic data, so that the results can be compared to the 
-known ground truth. In Section \ref{sec:results:stockmarket}
+known ground truth. In Section~\ref{sec:results:stockmarket}
 we apply the methodology to a time series of the 
 Vanguard FTSE All-World Index (Ticker: \texttt{VWCDE.DE}).
 In all cases, for the sake of simplicity, we fix $\rho = 0$.
@@ -1624,16 +1625,15 @@ shown in Figure~\ref{fig:synthetic:S}.
 We ran 75 iterations of OpenEvolve using a mix of ChatGPT 5.4 (40\% of the time)
 and Gemini 3 Flash (60\% of the time).
 \begin{figure}[htpb]
-      \centering
-      \includegraphics[width=0.95\linewidth]{images/initial_synth_price.png}\\
-      \includegraphics[width=0.95\linewidth]{images/variance.png}
-
-      \caption{(Top) The red line shows the simulated asset price path generated from the Heston model using known parameters. The gray thin lines in the background are samples of the posterior distribution of $S_k$ corresponding to the best model determined by openevolve. (Bottom) Corresponding actual path of $v_k$ (red line) and samples from the posterior distribution of $v_k$.
-      }
-      \label{fig:synthetic:S}
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/initial_synth_price.png}\\
+    \includegraphics[width=0.95\linewidth]{images/variance.png}
+    \caption{(Top) The red line shows the simulated asset price path generated from the Heston model using known parameters. The gray thin lines in the background are samples of the posterior distribution of $S_k$ corresponding to the best model determined by openevolve. (Bottom) Corresponding actual path of $v_k$ (red line) and samples from the posterior distribution of $v_k$.
+    }
+   \label{fig:synthetic:S}
 \end{figure}
 
-Figure \ref{fig:synthetic:S} shows 1,000 paths drawn from the posterior 
+Figure~\ref{fig:synthetic:S} shows 1,000 paths drawn from the posterior 
 distribution of $S_k$ for the best model returned by OpenEvolve. 
 We observe that the samples of $v_k$ are particularly tightly concentrated 
 around the true path, which was unknown to the model.
@@ -1652,14 +1652,14 @@ and
 (v) $v_0 \sim 10^{-8} + \log\mathcal{N}(\log \hat{\theta}, 1)$, 
 implying a log-normal prior on $\nu_0$.
 
-In Table \ref{tab:synthetic:parameter-comparison} 
+In Table~\ref{tab:synthetic:parameter-comparison} 
 we present the posterior estimates of the initial and 
 best program computed by openevolve.
 The scores of the initial and best program are shown 
-in Table \ref{tab:synthetic:scores}.
+in Table~\ref{tab:synthetic:scores}.
 Although the exact values of the model parameters
 are not estimated accurately, as we see in Table 
- \ref{tab:synthetic:parameter-comparison}, 
+~\ref{tab:synthetic:parameter-comparison}, 
 openevolve achieves a $+0.185$ increase in the 
 posterior predictive score, at the expense of a 
 decrease in the ESS score, which is, nonetheless,
@@ -1735,9 +1735,9 @@ Again, OpenEvolve was used with the same LLMs.
 For each dataset, 100 iterations were run. 
 Both programs were run with 10,000 draws and 10,000 tune.
 The estimated posteriors of the model parameters are 
-summarised in Table \ref{tab:stock:parameter-comparison}.
+summarised in Table~\ref{tab:stock:parameter-comparison}.
 The scores of the best evolved program are shown 
-in Table \ref{tab:stock:scores}.
+in Table~\ref{tab:stock:scores}.
 
 
 \begin{table}[htpb]
@@ -1831,35 +1831,18 @@ marginal distribution of $S_t$ shown in Figure
 series is captured by the estimated Heston model.
 
 \section{Conclusions \& Future Work}\label{sec:conclusions}
-This paper demonstrated the potential of evolutionary 
-algorithms driven by LLMs to produce meaningful 
-Bayesian estimates of the parameters and paths of 
-the stochastic Heston model---a challenging task 
-that otherwise requires significant effort by an 
-expert. 
-
-The results are encouraging and can be extended to 
-other stochastic models. 
-First, the approach could be benchmarked against established state-space estimation methods for the Heston model, 
-    including extended Kalman filtering, particle filtering techniques~\cite{BlancBlocquel2024,BaoFengZhang2025,Gruszka2022,Li2013}
-\begin{itemize}
-    \item Several avenues remain open for future work:
-    \item 
-    \item the framework could be extended to the more complex models, such as the Bates model~\cite{Bates}, which extends the Heston model by adding a Poisson-driven jump component.
-    to asset prices. This would test whether OpenEvolves' flexibility generalises
-    beyond the single-factor continuous diffusion setting studied here.
-    \item Since OpenEvolves performance is directly coupled to the capability of its underlying LLM ensemble. As LLM models continue to improve
-    in mathematical reasoning and code generation, the quality of proposed mutations can be expected to improve correspondingly.
-    \item A key limitation of the proposed approach is computational cost. Each iteration of the evolutionary loop requires one or more API 
-    calls to the LLM to generate candidate programs. This is then followed by execution and evaluation of the resulting PyMC sampler, which is 
-    computationally expensive due to the nature of the program. However, with access to more computing power, the generation and execution of the candidate
-    programs can be sped up. 
-    \item The multistage evaluation pipeline (Section~\ref{sec:multistageEval}) could be extended 
-    to incorporate additional stages, with an increased number of tuning steps and posterior samples per 
-    iteration. This would allow the fitness function to more accurately distinguish between candidate programs,
-    potentially improving the quality of the evolutionary search at the cost of additional computation.
-\end{itemize}
-
+This paper demonstrated the potential of evolutionary algorithms driven by 
+LLMs to produce meaningful Bayesian estimates of the parameters 
+and paths of the stochastic Heston model—a 
+challenging task that otherwise requires significant effort by an expert
+The results are encouraging and can be extended to other stochastic models.
+Firstly, the approach could be benchmarked against established state-space 
+estimation methods for the Heston model, 
+including extended Kalman filtering, 
+particle filtering techniques~\cite{BlancBlocquel2024,BaoFengZhang2025,Gruszka2022,Li2013}.
+The framework could be extended to the 
+other models, such as the Bates model~\cite{Bates}, 
+which extends the Heston model by adding a Poisson-driven jump component to asset prices.
 
 
 \chapter{System Requirements and Specifications}
@@ -1870,79 +1853,105 @@ As well as the requirements of the
 
 Firstly is the development of a solver for the Black Scholes PDE using the,
 Explicit FDM. The requirements are as follows:
-\begin{table}[H]
-    \centering
-    \caption{Project requirements, type, and verification}
-    \label{tab:project_requirements}
-    \begin{tabular}{p{10cm}cc}
-    \hline
-    Requirement & Type & Verification \\
-    \hline
-    Discretise the GBM and visualise the results in Python & 0.827 & \\
-    Extend the GBM to price European calls and puts using Monte Carlo & 0.827 & \\
-    Accelerate Monte Carlo using CUDA & 0.827 & \\
-    Price European calls and puts using the closed-form Black--Scholes equation & 0.827 & \\
-    Understand finite difference methods and how they apply to the Black--Scholes PDE & 0.827 & \\
-    Create an explicit FDM solver for calls and puts in Python & 0.827 & \\
-    Compare accuracy against the closed-form solution for both CUDA and Python implementations & 0.827 & \\
-    Visualise the resulting option surface & 0.827 & \\
-    Benchmark the solver using accuracy and runtime for both CUDA and Python & 0.827 & \\
-    Plot the resulting benchmark data & 0.827 & \\
-    Accelerate the explicit solver using CUDA & 0.827 & \\
-    Optimise the CUDA implementation & 0.827 & \\
-    \hline
-    \end{tabular}
-\end{table}
+
 Second, is the development of a repository for parameter estimation of the Heston PDE and corresponding, 
 evaluator for Openevolve \ps{WIP}. The requirements are as follows:
-\begin{table}
-    \centering
-\caption{Project requirements for the Heston parameter estimation repository}
-\label{tab:heston-repository-requirements}
-\begin{tabular}{lccc}
-\hline
-Requirement                 & Type & Verification\\
-\hline
-Discretization of the GBM and visualisation in Python              & 0.827 & \\
-Extend the GBM to price European Calls \& Puts using Monte Carlo   & 0.827 & \\
-Accelerate Monte Carlo using CUDA                & 0.827 & \\
-Price European Calls\& Puts using the Closed-form BSE           & 0.827 & \\
-Understand the FDMs and how they apply to the BSE PDE                                            & 0.827 & \\
-Create a solver using the Explicit FDM for Calls and Puts in Python                              & 0.827 & \\
-Compare accuracy against the closed form solution for both CUDA and Python implementations         & 0.827 & \\
-Visualise the Option surface produced           & 0.827 & \\
-Benchmark the solver using the metrics accuracy and time for CUDA and Python         & 0.827 & \\
-Plot the resulting benchmarks           & 0.827 & \\
-Accelerate the Explicit solution using CUDA           & 0.827 & \\
-Optimize the CUDA implementation           & 0.827 & \\
-\hline
-\end{tabular}
-\end{table}
-
 
 \bibliographystyle{plain}
 \bibliography{bibliography}
 \chapter{Appendices}
 
-\section{Tests}
 
+\Needspace{8\baselineskip}
+\section{Requirements Table}
 
+{\small
+\setlength{\LTpre}{0.5\baselineskip}
+\setlength{\LTpost}{0.75\baselineskip}
+\begin{longtable}{|R|Q|W|P|}
+  \caption{System Requirements}
+  \label{tab:system-requirements}\\
+  \hline
+  \textbf{ID} & \textbf{Requirement Type} & \textbf{Requirement Description} & \textbf{Priority} \\
+  \hline
+  \endfirsthead
+  \caption[]{System Requirements continued}\\
+  \hline
+  \textbf{ID} & \textbf{Requirement Type} & \textbf{Requirement Description} & \textbf{Priority} \\
+  \hline
+  \endhead
+  \hline
+  \endfoot
+  SR-01 & Functional & The system shall simulate Geometric Brownian Motion paths for a configurable initial asset price, drift, volatility, maturity, number of paths, and
+  time steps. & High \\
+  \hline
+  SR-02 & Functional & The system shall calculate European call and put option payoffs from simulated terminal asset prices. & High \\
+  \hline
+  SR-03 & Functional & The system shall price European call and put options using Monte Carlo simulation under the Black--Scholes assumptions. & High \\
+  \hline
+  SR-04 & Functional & The system shall calculate the standard error of Monte Carlo option price estimates to quantify simulation uncertainty. & High \\
+  \hline
+  SR-05 & Functional & The system shall solve the Black--Scholes equation using an explicit finite-difference method for European call and put options. & High \\
+  \hline
+  SR-06 & Functional & The system shall apply correct terminal and boundary conditions for both call and put finite-difference grids. & High \\
+  \hline
+  SR-07 & Functional & The system shall compare numerical option prices against analytical Black--Scholes prices for validation. & High \\
+  \hline
+  SR-08 & Functional & The system shall support visualisation of simulated distributions, pricing behaviour, and benchmark results using Python plotting libraries. & Medium
+  \\
+  \hline
+  SR-09 & Functional & The system shall export selected plots to \LaTeX-compatible TikZ files for inclusion in the written report. & Medium \\
+  \hline
+  SR-10 & Functional & The system shall provide a CUDA implementation for accelerated Monte Carlo and finite-difference option pricing experiments. & Medium \\
+  \hline
+  SR-11 & Validation & The system shall include unit tests for core mathematical helpers, payoff calculations, probability density functions, and deterministic simulation
+  behaviour. & High \\
+  \hline
+  SR-12 & Validation & The system shall include integration tests that compare Monte Carlo and explicit finite-difference prices against analytical Black--Scholes results. &
+  High \\
+  \hline
+  SR-13 & Technical & The Python components shall run in a Python virtual environment with dependencies including NumPy, SciPy, Matplotlib, Numba, Pandas, Seaborn, tqdm,
+  yfinance, and Jupyter/IPython support. & High \\
+  \hline
+  SR-14 & Technical & The CUDA components shall be buildable using CMake 3.22.1 or later, the CUDA Toolkit, CUDA C++17, and C++20. & Medium \\
+  \hline
+  SR-15 & Technical & The CUDA build shall support NVIDIA GPU execution, with the default architecture configured for compute capability 8.6 while allowing the architecture
+  to be overridden for other GPUs. & Medium \\
+  \hline
+  SR-16 & Non-functional & The system shall use seeded random number generation where required to make tests and validation experiments reproducible. & High \\
+  \hline
+  SR-17 & Non-functional & The system shall separate Python notebook experimentation from reusable Python modules and CUDA source code where practical. & Medium \\
+  \hline
+  SR-18 & Non-functional & The system shall be suitable for numerical experimentation, benchmarking, and report generation rather than deployment as an end-user application.
+  & Medium \\
+  \hline
+\end{longtable}
+}
 
-\section*{Automated Test Summary}
+\Needspace{8\baselineskip}
+\section{Tests}\label{apex:tests}
+Unit tests and integration tests for
+both repositories are detailed below.
 
-The automated test suite was run with
-\texttt{python -m unittest discover -s heston-openevolve\textbackslash tests -p "test\_*.py"}.
-All 14 tests completed successfully.
-
-\begin{table}[htbp]
-\centering
-\caption{Unit test descriptions and outcomes}
-\label{tab:unit-tests}
-\small
-\begin{tabularx}{\textwidth}{|T|D|O|}
+\Needspace{8\baselineskip}
+\subsection{Unit tests for Heston Estimator repo}
+{\small
+\setlength{\LTpre}{0.5\baselineskip}
+\setlength{\LTpost}{0.75\baselineskip}
+\begin{longtable}{|U|V|Z|}
+\caption{Unit test description and outcomes for heston-estimator}
+\label{tab:unit-tests}\\
 \hline
 \textbf{Unit test} & \textbf{Test description} & \textbf{Outcome} \\
 \hline
+\endfirsthead
+\caption[]{Unit test description and outcomes for heston-estimator continued}\\
+\hline
+\textbf{Unit test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\endhead
+\hline
+\endfoot
 \texttt{test\_\allowbreak derive\_\allowbreak seed\_\allowbreak is\_\allowbreak stable\_\allowbreak and\_\allowbreak label\_\allowbreak sensitive}
 & Verifies that derived random seeds are deterministic for the same labels, change when labels change, and remain inside the valid integer range.
 & Passed \\
@@ -1983,18 +1992,29 @@ All 14 tests completed successfully.
 & Confirms that the R-hat diagnostic uses the maximum reported R-hat value to calculate the score and to detect a deal-breaker threshold breach.
 & Passed \\
 \hline
-\end{tabularx}
-\end{table}
+\end{longtable}
+}
 
-\begin{table}[htbp]
-\centering
-\caption{Integration test descriptions and outcomes}
-\label{tab:integration-tests}
-\small
-\begin{tabularx}{\textwidth}{|T|D|O|}
+
+\Needspace{8\baselineskip}
+\subsection{Integration tests for Heston-Estimator repo}
+{\small
+\setlength{\LTpre}{0.5\baselineskip}
+\setlength{\LTpost}{0.75\baselineskip}
+\begin{longtable}{|U|V|Z|}
+\caption{Integration test descriptions and outcomes for heston-estimator}
+\label{tab:integration-tests}\\
 \hline
 \textbf{Integration test} & \textbf{Test description} & \textbf{Outcome} \\
 \hline
+\endfirsthead
+\caption[]{Integration test descriptions and outcomes for heston-estimator continued}\\
+\hline
+\textbf{Integration test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\endhead
+\hline
+\endfoot
 \texttt{test\_\allowbreak data\_\allowbreak csv\_\allowbreak run\_\allowbreak contains\_\allowbreak required\_\allowbreak evaluator\_\allowbreak groups}
 & Loads the saved \texttt{data\_csv\_run.nc} inference fixture and confirms that required posterior and sample-statistic groups are present.
 & Passed \\
@@ -2011,27 +2031,27 @@ All 14 tests completed successfully.
 & Runs a small posterior predictive check using parameters sampled from the saved inference data and verifies that the score is finite and bounded between zero and one.
 & Passed \\
 \hline
-\end{tabularx}
-\end{table}
+\end{longtable}
+}
 
-
-\section*{Test Summary}
-
-The following tables summarise the unit and integration tests in the Python
-test suite. The recorded outcome is based on running:
-\texttt{python -m pytest tests -q}. The full suite passed with 22 tests.
-
-\subsection*{Unit Tests}
-
-\begin{table}[htbp]
-\centering
-\caption{Unit test descriptions and outcomes}
-\label{tab:pytest-unit-tests}
-\small
-\begin{tabularx}{\textwidth}{|T|D|O|}
+\Needspace{8\baselineskip}
+{\small
+\setlength{\LTpre}{0.5\baselineskip}
+\setlength{\LTpost}{0.75\baselineskip}
+\begin{longtable}{|U|V|Z|}
+\caption{Unit test descriptions and outcomes for finalyearproject repo}
+\label{tab:pytest-unit-tests}\\
 \hline
 \textbf{Unit test} & \textbf{Test description} & \textbf{Outcome} \\
 \hline
+\endfirsthead
+\caption[]{Unit test descriptions and outcomes for finalyearproject repo continued}\\
+\hline
+\textbf{Unit test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\endhead
+\hline
+\endfoot
 \texttt{test\_\allowbreak number\_\allowbreak of\_\allowbreak days\_\allowbreak asset\_\allowbreak level\_\allowbreak returns\_\allowbreak zero\_\allowbreak float64\_\allowbreak grid}
 & Verifies that the BSE grid constructor returns a zero-filled NumPy array with the expected shape and \texttt{float64} dtype.
 & Passed \\
@@ -2088,20 +2108,28 @@ test suite. The recorded outcome is based on running:
 & Confirms paired call and put Monte Carlo estimates are computed from the same simulated terminal price sample.
 & Passed \\
 \hline
-\end{tabularx}
-\end{table}
+\end{longtable}
+}
 
-\subsection*{Integration Tests}
 
-\begin{table}[htbp]
-\centering
-\caption{Integration test descriptions and outcomes}
-\label{tab:pytest-integration-tests}
-\small
-\begin{tabularx}{\textwidth}{|T|D|O|}
+\Needspace{8\baselineskip}
+{\small
+\setlength{\LTpre}{0.5\baselineskip}
+\setlength{\LTpost}{0.75\baselineskip}
+\begin{longtable}{|U|V|Z|}
+\caption{Integration tests description and outcomes for finalyearproject repo}
+\label{tab:pytest-integration-tests}\\
 \hline
 \textbf{Integration test} & \textbf{Test description} & \textbf{Outcome} \\
 \hline
+\endfirsthead
+\caption[]{Integration tests description and outcomes for finalyearproject repo continued}\\
+\hline
+\textbf{Integration test} & \textbf{Test description} & \textbf{Outcome} \\
+\hline
+\endhead
+\hline
+\endfoot
 \texttt{test\_\allowbreak explicit\_\allowbreak solver\_\allowbreak prices\_\allowbreak match\_\allowbreak black\_\allowbreak scholes\_\allowbreak at\_\allowbreak spot}
 & Runs the explicit finite-difference BSE call and put solvers end-to-end, validates the generated time and asset grids, checks boundary conditions, and compares the spot price against the analytical Black--Scholes value.
 & Passed \\
@@ -2110,7 +2138,7 @@ test suite. The recorded outcome is based on running:
 & Runs seeded Monte Carlo call and put pricing end-to-end and verifies the simulated prices converge to analytical Black--Scholes values within a tolerance based on the simulated standard error.
 & Passed \\
 \hline
-\end{tabularx}
-\end{table}
+\end{longtable}
+}
 
 \end{document}
