@@ -4,7 +4,7 @@ import matplot2tikz
 import numpy as np
 from matplotlib import pyplot as plt
 
-from Brownian_Motion.Geometric_BM import gbm_lognormal_pdf, monte_carlo_call_put, normal_pdf
+from G_Brownian_Motion.Geometric_BM import gbm_lognormal_pdf, monte_carlo_call_put, normal_pdf
 from Bse_Explicit.bse_analytical import bse_analytical
 
 

@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from Brownian_Motion import Geometric_BM as gbm
+from G_Brownian_Motion import Geometric_BM as gbm
 
 
 class FixedRng:

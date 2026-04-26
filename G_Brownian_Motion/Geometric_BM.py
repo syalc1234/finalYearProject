@@ -35,28 +35,6 @@ def simulate_terminal_prices(S0, r, sigma, T, numofPaths, rng=None):
     return S0 * np.exp(drift + diffusion)
 
 
-def gbm_lognormal_pdf(x, S0, mu, sigma, T):
-    x = np.asarray(x, dtype=float)
-    pdf = np.zeros_like(x)
-
-    positive_mask = x > 0.0
-    if not np.any(positive_mask):
-        return pdf
-
-    variance = sigma**2 * T
-    log_mean = np.log(S0) + (mu - 0.5 * sigma**2) * T
-    denominator = x[positive_mask] * np.sqrt(2.0 * np.pi * variance)
-    exponent = -((np.log(x[positive_mask]) - log_mean) ** 2) / (2.0 * variance)
-    pdf[positive_mask] = np.exp(exponent) / denominator
-    return pdf
-
-
-def normal_pdf(x, mean, std):
-    x = np.asarray(x, dtype=float)
-    return np.exp(-0.5 * ((x - mean) / std) ** 2) / (std * np.sqrt(2.0 * np.pi))
-
-
-
 def option_price_from_terminal_prices(ST, K, r, T, option_type="call"):
     payoff = european_option_payoff(ST, K, option_type=option_type)
     discount_factor = np.exp(-r * T)
@@ -87,26 +65,11 @@ def monte_carlo_call_put(S0, K, r, sigma, T, numofPaths, timeSteps, rng=None):
     return {"call": call, "put": put}
 
 
-def main123():
-    from Brownian_Motion.plots import plot_gbm_lognormal_distribution
+def main():
+    print("Test")
 
-    S0 = 274.80
-    sigma = 0.1730
-    T = 1
-    fig, ax, ST = plot_gbm_lognormal_distribution(S0, 0.0375, sigma, T, numofPaths=20000000, bins=75, rng=None, ax=None, tikz_filename="../plots_tex/logNormaldist.tex")
-    fig.show()
+
+
 
 if __name__ == "__main__":
     main()
-
-
-"""
-CPU:
-[23.96317248 23.98589092 23.98139959 23.9940673  23.96806923 23.97552303]
-
-GPU:
-[23.9657,23.9837, 23.967, 23.9774, 23.9756, 23.978]
-
-23.9785783872683
-
-"""
