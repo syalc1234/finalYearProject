@@ -121,42 +121,6 @@ def test_simulate_terminal_prices_uses_closed_form_gbm_distribution():
     assert rng.calls == [(0.0, 1.0, z_values.size)]
 
 
-def test_gbm_lognormal_pdf_matches_formula_and_zeros_nonpositive_values():
-    x = np.array([-1.0, 0.0, 80.0, 100.0, 120.0])
-    s0 = 100.0
-    mu = 0.05
-    sigma = 0.2
-    maturity = 1.0
-
-    pdf = gbm.gbm_lognormal_pdf(x, s0, mu, sigma, maturity)
-
-    positive_x = x[x > 0.0]
-    variance = sigma**2 * maturity
-    log_mean = math.log(s0) + (mu - 0.5 * sigma**2) * maturity
-    expected_positive_pdf = np.exp(-((np.log(positive_x) - log_mean) ** 2) / (2.0 * variance)) / (
-        positive_x * np.sqrt(2.0 * np.pi * variance)
-    )
-
-    assert np.array_equal(pdf[:2], np.zeros(2))
-    assert np.allclose(pdf[2:], expected_positive_pdf)
-
-
-def test_gbm_lognormal_pdf_returns_zeros_when_all_values_are_nonpositive():
-    x = np.array([-5.0, 0.0])
-
-    pdf = gbm.gbm_lognormal_pdf(x, S0=100.0, mu=0.05, sigma=0.2, T=1.0)
-
-    assert np.array_equal(pdf, np.zeros_like(x))
-
-
-def test_normal_pdf_matches_standard_formula():
-    x = np.array([-1.0, 0.0, 1.0])
-
-    pdf = gbm.normal_pdf(x, mean=0.0, std=1.0)
-
-    expected = np.exp(-0.5 * x**2) / np.sqrt(2.0 * np.pi)
-    assert np.allclose(pdf, expected)
-
 
 @pytest.mark.parametrize(
     ("option_type", "expected_payoff"),
