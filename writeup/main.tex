@@ -147,19 +147,49 @@ By submitting your dissertation you declare that you have completed the tutorial
 \end{tabular}
 
 
-
+\newpage
 \section*{Acknowledgements}
+
+I would like to express my sincere gratitude to my 
+supervisor, Dr Pantelis Sopasakis, for his guidance,
+support, and encouragement throughout this project. 
+His feedback, patience, and expertise were invaluable 
+in shaping both the direction of the work and the final 
+dissertation. I am very grateful for the time and effort 
+he devoted to helping me throughout the project.
+\newpage
 \section*{Abstract}
+This dissertation investigates 
+GPU-accelerated option pricing and Bayesian inference under 
+stochastic volatility. In the first part, European options under 
+the Black--Scholes model are priced using an explicit finite-difference 
+solver and Monte Carlo simulation, implemented in Python and accelerated 
+with Numba and CUDA. Numba improves CPU performance, while CUDA delivers 
+the largest gains: the explicit GPU solver achieves speed-ups of up 
+to $950\times$ over the CPU implementation, and the Monte Carlo solver 
+reaches $182\times$ for the largest path count.
+
+The second part extends the study to the Heston stochastic-volatility 
+model. A Bayesian framework is developed to estimate model parameters 
+and latent variance paths from synthetic and real market data, and 
+OpenEvolve is used to refine priors and inference code through 
+execution-based scoring. The evolved models improve predictive fit, 
+although exact parameter recovery remains difficult because of the 
+identifiability and geometry of the Heston model.
+
+Overall, the dissertation shows that GPU acceleration can 
+substantially improve option-pricing performance and that 
+agent-assisted evolution can support Bayesian inference for 
+stochastic-volatility models.
 \newpage
 \tableofcontents
 \newpage
 
 
 \chapter{Introduction and Problem Area}
-\ps{Introduce options here}
-Accurate and efficient option pricing is fundamental in 
-financial markets, as it underpins trading strategies, 
-hedging, and risk management. The Black--Scholes framework 
+Accurate and efficient derivative pricing is fundamental
+in financial markets, as it underpins trading strategies, 
+hedging, and risk management. The Black--Scholes Equation (BSE) 
 remains one of the most influential models for 
 pricing European options~\cite{black1973pricing}.
 
@@ -170,6 +200,13 @@ finance. In particular, finite-difference methods provide
 a practical way to approximate solutions of the 
 Black--Scholes equation has been widely studied 
 in the literature~\cite{414b2dca-3879-3269-bb3d-fa223d68ead3,math8030391,5523590}. 
+Certain options contracts admit no closed form solution
+to the BSE due to the complex payoff function of the 
+contract, which is why the equation needs numerical solutions.
+Efficient pricing using numerical methods, 
+requires many arithmetic operations, 
+which can be time consuming. The explicit solution is
+a good candidate for GPU acceleration.  
 Monte Carlo simulation offers a complementary 
 approach that is especially useful for pricing 
 exotic options, where the payoff structure 
@@ -182,15 +219,20 @@ A key limitation of the classical Black--Scholes model
 is its assumption of constant volatility, which is often 
 inconsistent with observed market behaviour. This motivates
 the use of stochastic-volatility models, such as the 
-two-factor Heston PDE~\cite{heston2015}.
+two-factor Heston SDE~\cite{heston2015}.
 
 This dissertation investigates two related problems.
 First, it studies the numerical pricing of 
 European options by solving the Black--Scholes 
 equation using the explicit finite-difference 
-method and Monte Carlo simulation. These implementations 
+method. These implementations 
 are accelerated using Numba and CUDA and are benchmarked 
-to evaluate performance. Second, the dissertation extends 
+to evaluate performance. Monte Carlo simulations
+are introduced as an alternative pricing methodology
+for European options as well. It is also accelerated using
+CUDA.
+
+Second, the dissertation extends 
 the analysis to the Heston stochastic-volatility model 
 and explores the use of OpenEvolve for parameter estimation. 
 The remainder of the
@@ -208,9 +250,10 @@ Chapter~\ref{ch:6} defines the system requirements and specifications, and Chapt
 
 \section{Aims and Objectives}
 \begin{itemize}
-    \item Implement a solver for the BSE using the explicit FDM
-    \item Accelerate the solver using Numba and CUDA
-    \item Benchmark the implementations;
+    \item Implementation of an explicit finite difference solver for the Black Scholes Equation,
+    optimised by Numba and CUDA;
+    \item Development of a GPU accelerated Monte Carlo pricing for European Options
+    \item Benchmarking and analysis of CPU, Numba and GPU implementations
     \item Construct a Bayesian Estimator using PyMC for the parameters
     of the Heston model
     \item Investigate whether OpenEvolve can improve estimator quality.
@@ -248,7 +291,7 @@ Equation~\ref{eq:discGBM} is then used to simulate sample paths of the stock pri
     \label{fig:gbm}
 \end{figure}
 
-\section{The Black Scholes Equation and Options} \label{sec:BSE}
+\section{The Black Scholes Equation and Options}\label{sec:BSE}
 An option is a financial contract whose value depends on an 
 underlying asset, such as a stock or a bond. In this project, 
 we consider European options, which can be exercised 
@@ -256,8 +299,8 @@ only at maturity $T$~\cite{alma991008708403508046}.
 The two cases studied in this paper are the call and the put.
 A European call gives the holder the right, 
 but not the obligation to buy the underlying asset 
-at the strike price $K$ on the maturity date $T$. 
-Its payoff at maturity is
+at the strike price $K$ on an agreed upon maturity date $T$. 
+The payoff at maturity is
 \begin{equation}
   V(S,T) = \max(S-K,0)
 \end{equation}
@@ -271,8 +314,11 @@ A European put gives the holder the right, but not the obligation, to sell the u
 The Black-Scholes Equation (BSE) is a 
 Partial Differential Equation (PDE) 
 widely used in finance to determine the price of European options.
+The BSE depends on the key parameters: 
+the risk--free rate ($r$), volatility ($\sigma$), 
+stock price ($S$) and time to maturity ($T$)
 
-The Black Scholes rests on certain assumptions; the underlying asset evolves with the GBM~\ref{eq:GBM} with constant $\sigma$ and a constant risk- -free--rate $r$.
+The BSE rests on certain assumptions; the underlying asset evolves with the GBM~\ref{eq:GBM} with constant $\sigma$ and a constant $r$.
 Additionally, no arbitrage opportunities exist, which means it is impossible to make a 
 profit without taking on risk, and there are no 
 transaction costs or taxes associated with owning 
@@ -394,7 +440,7 @@ asset~\cite{alma991008589012108046}. Delta can be defined as:
 \end{equation}
 \begin{figure}[htbp]
     \centering
-    \input{tikz/Delta.tex}
+    \scalebox{0.72}{\input{tikz/Delta.tex}}
     \caption{Impact of Stock Price(S) on Delta ($\Delta$)}
     \label{fig:delta_greek}
 \end{figure}
@@ -418,7 +464,7 @@ time decay is not linear, and it accelerates as time to expiration approaches.
 
 \begin{figure}[H]
     \centering
-    \input{tikz/Theta.tex}
+    \scalebox{0.72}{\input{tikz/Theta.tex}}
     \caption{Impact of Stock Price(S) on Theta ($\Theta$)}
     \label{fig:theta_greeks}
 \end{figure}
@@ -436,7 +482,7 @@ remain delta-neutral. A large Gamma indicates that
 very frequent rebalancing is needed, while a low Gamma indicates the opposite. 
 \begin{figure}[H]
     \centering
-    \input{tikz/Gamma.tex}
+    \scalebox{0.72}{\input{tikz/Gamma.tex}}
     \caption{Impact of Stock Price(S) on Gamma($\Gamma$)}
     \label{fig:gamma_greek}
 \end{figure}
@@ -755,7 +801,7 @@ interpolation was used to obtain an accurate option value.
 In particular, \textit{CubicSpline}~\cite{2020SciPy-NMeth,scipy-cubicspline-docs} was used to estimate the option price at the required spot value.
 
 A full implementation is available in the accompanying GitHub repository~\cite{yalcin_finalyearproject}.
-The python packge uses the same code from~\cite{yalcin_finalyearproject} pip package is published to PyPi~\cite{yalcin2026bse}
+The python package uses the same code from~\cite{yalcin_finalyearproject} pip package is published to PyPi~\cite{yalcin2026bse}
 
 \subsection{Optimisation}\label{sec:PythonOpt}
 The initial implementation serves as a baseline, as it relies only on arrays and standard NumPy operations. 
@@ -797,7 +843,7 @@ where each path can be evaluated independently. In practice, threads are organis
 which are scheduled onto \textit{streaming multiprocessors} (SMs), the main processing units of the GPU.
 Each SM is responsible for executing groups of threads and managing resources such as registers and shared memory. 
 Efficient GPU performance, therefore, depends not only on parallelism in the algorithm, 
-but also on how effectively the workload is mapped onto the available SMs.
+but also on how effectively the workload is mapped onto the available SMs~\cite{4626815}.
 
 CUDA also provides \textit{unified memory}, which offers a
 single memory space accessible by both the CPU and GPU. 
@@ -890,7 +936,7 @@ one spatial index using
 \begin{verbatim}
 index = blockIdx.x * blockDim.x + threadIdx.x;
 \end{verbatim}
-and then applies the stencil \ref{eg:stencil}
+and then applies the stencil~\ref{eg:stencil}
 
 The first CUDA version uses global memory for the stencil reads. This already provides parallelism, but it also generates redundant memory traffic. Adjacent threads require overlapping
 data: thread $i$ reads \texttt{currentValues[i - 1]}, \texttt{currentValues[i]}, and \texttt{currentValues[i + 1]}, while thread $i+1$ reads two of those same values again. A
@@ -924,33 +970,40 @@ Monte Carlo across the full computation because time steps
 cannot be evaluated out of order. However, each time step exposes
 substantial spatial parallelism. 
 \chapter{Benchmarking \& Results}\label{sec:Benchmarks}
+
 \subsection{Benchmarking Methodology}
 
-The project benchmarks the CUDA implementations using CUDA events. CUDA 
-events are recorded on the GPU execution stream, and the elapsed time between two events is reported in
-milliseconds. This is more appropriate than a CPU wall-clock timer for 
-CUDA kernels because kernel launches are asynchronous: the CPU can
-continue execution before the GPU work has completed. By recording a 
-start event before the measured GPU work and a stop event after it, then synchronising on the stop event, the
-program ensures that the reported time corresponds to completed CUDA work.
+The CUDA implementations were benchmarked 
+using CUDA events, which record timestamps on 
+the GPU execution stream and report elapsed time 
+in milliseconds. This is more appropriate than using 
+a CPU wall-clock timer because CUDA kernel launches are 
+asynchronous, so the CPU may continue execution before 
+the GPU work has completed. By recording a start event 
+before the measured section, a stop event afterwards, and 
+synchronising on the stop event, the reported time 
+corresponds to completed GPU work\cite{harris2012performance}.
 
-For the Monte Carlo method, timing is performed in \texttt{runMonteCarloCall}. 
-A CUDA start event is recorded immediately before the call to \texttt{monteCarlo}, and a stop event
-is recorded after \texttt{cudaDeviceSynchronize}. The timed section, therefore, 
-covers the main GPU-side Monte Carlo payoff generation workflow: device vector setup, cuRAND normal
-random number generation, and the CUDA kernel that computes discounted call payoffs.
+For the Monte Carlo method, timing is performed in 
+\texttt{runMonteCarloCall}. The timed section 
+includes device-vector setup, 
+cuRAND normal random number generation, 
+and the CUDA kernel that computes discounted call payoffs.
 
-\ps{fix below}
-For the explicit finite-difference Black--Scholes method, timing is performed inside \texttt{priceBlackScholesExplicitCall}. The setup phase computes the grid bounds, number of
-spatial nodes, number of time steps, time-step size, and allocates the device vectors. The terminal payoff condition is also initialised before the timed region. The CUDA start
-event is then recorded immediately before the backwards time-stepping loop. Each iteration launches \texttt{fillInteriorKernel}, which updates the option values across the
-spatial grid for one time level. After all time steps have been launched, the stop event is recorded and synchronised. The reported value, printed as \texttt{Time-Step Kernel
-Loop (ms)}, therefore measures only the repeated finite-difference kernel loop. It excludes grid construction, memory allocation, terminal-condition initialisation, copying the
-final grid back to the host, and interpolation of the final option price.
+For the explicit finite-difference Black--Scholes 
+method a start event is recorded immediately before the 
+backward time-stepping loop. After all time steps have 
+been launched, the stop event is recorded and 
+synchronised. This 
+measures only the repeated 
+finite-difference kernel loop. 
+It excludes grid construction, memory allocation, 
+terminal-condition initialisation, 
+copying the final grid back to the host, 
+and interpolation of the final option price.
 
-All benchmarks for CPU implementations were run on a system equipped with an Intel Core i7 CPU clocked at 2.30 GHz 
-and for CUDA benchmarks an NVIDIA A40 GPU was used.
-Speed--up is measured using the general relation
+CPU benchmarks were run on a
+system with an Intel Core i7 CPU clocked at 2.30 GHz, while CUDA benchmarks used an NVIDIA A40 GPU. Speed--up is measured using the general relation
 
 \begin{equation}
   \text{speedup} = \frac{t_{\text{baseline}}}{t_{\text{optimised}}}
@@ -958,21 +1011,38 @@ Speed--up is measured using the general relation
 where $t_{\text{baseline}}$ denotes the runtime of the reference 
 implementation and $t_{\text{optimised}}$ denotes the runtime of the 
 accelerated implementation. For the Python benchmarks, the optimised implementation is the Numba version,
-while for GPU benchmarks Shared Memory Implementation.
+whereas for GPU benchmarks the optimised implementation is the shared-memory implementation.
 
 For benchmarking purposes, the option priced is 
 a European Call Option with stock price $S_0 = \$274.80$, 
 strike price $K = \$275.00$, time to expiry $T = 0.0548$, 
 volatility $\sigma = 0.1730$, and risk-free rate $r = 0.0375$.
-The main variable which changed was $\Delta S = {3, 1.5, 0.75, 0.375}$.
+For the explicit FDM benchmarking, the main variable which 
+changed was $\Delta S = {3, 1.5, 0.75, 0.375}$.
+As $\Delta S$ decreases the size of the grid increases.
 
-\section{Python Benchmarking}\label{sec:PythonBenchmarks}
-
+\section{Python Explicit FDM Benchmarking }\label{sec:PythonBenchmarks}
+First the pure Python and Numba implementations were 
+benchmarked against each other. 
+Table~\ref{tab:numba-benchmark} shows that the Numba 
+implementation significantly outperforms the pure 
+Python baseline. As the grid is refined the 
+computational cost for both implementations 
+significantly increases. However, the Python 
+implementation scales much less efficiently as 
+the nested loop updates incur significant overhead. 
+In contrast, Numba compiles these loops to efficient 
+machine code, leading to much lower runtimes with a 
+239.9x speed-up when $\Delta S=0.375$. The slight 
+increase between $\Delta S = 0.75$ and
+$\Delta S = 0.375$ can be attributed to the larger 
+grid exceeding the CPU cache capacity.
 \begin{table}[H]
 \centering
+\makebox[\textwidth][c]{%
 \begin{tabular}{||c c c c c||}
  \hline
- Spatial Step & Grid Size& CPU (ms) & Numba (ms) & Speed-up  \\ [0.5ex]
+ Spatial Step & Grid Size& CPU (ms) & Numba (ms) & Speed-up ($\times$)  \\ [0.5ex]
  \hline\hline
  3   &  27,400,000 & 28,585 & 2056 & 13.903 \\
  \hline
@@ -983,8 +1053,8 @@ The main variable which changed was $\Delta S = {3, 1.5, 0.75, 0.375}$.
 0.375 & 219,900,000 & 273,270 & 1139 & 239.9 \\
  \hline
 \end{tabular}
-\caption{Runtime comparison between Python and Numba implementations of the explicit FDM.}
-\label{tab:numba-benchmark}
+}
+\caption{Runtime comparison between Python and Numba implementations of the explicit FDM.}\label{tab:numba-benchmark}
 \end{table}
 \begin{figure}[H]
   \centering
@@ -992,17 +1062,16 @@ The main variable which changed was $\Delta S = {3, 1.5, 0.75, 0.375}$.
   \caption{Comparison of Runtime vs spatial step $\Delta S$ between Python and Numba.}
   \label{fig:NumbaBenchmark}
 \end{figure}
-Table~\ref{tab:numba-benchmark} shows that the Numba implementation significantly outperforms the pure Python baseline. As the grid is refined the computational cost for both implementations significantly increases. However, the Python implementation scales much less efficiently as the nested loop updates incur significant overhead. In contrast, Numba compiles these loops to efficient machine code, leading to much lower runtimes with a 239.9x speed up when $\Delta S=0.375$. The slight increase in between $\Delta S = 0.75$ and $\Delta S = 0.375$ can be attributed to the larger grid exceeding the CPU cache capacity.
 
+\section{GPU Explicit Benchmarking}
+Next the two GPU implementations are benchmarked.
 
-\section{Explicit}
-\ps{Mention grid size}
-
-\begin{center}\label{tbl:sharedVs_Global}
-\captionof{table}{Computation time measured in milliseconds for the global-memory and shared-memory implementations.}
+\begin{table}[H]
+\centering
+\makebox[\textwidth][c]{%
 \begin{tabular}{||c c c c c ||} 
  \hline
- Spatial Step & Grid Points & GPU Global (ms) & GPU Shared (ms) & Speed up \\ [0.5ex]
+ Spatial Step & Grid Points & GPU Global (ms) & GPU Shared (ms) & Speed-up ($\times$) \\ [0.5ex]
  \hline\hline
  3   &  27,400,000   & 287.078 & 193.666 & 1.482 \\ 
  \hline
@@ -1013,9 +1082,11 @@ Table~\ref{tab:numba-benchmark} shows that the Numba implementation significantl
  0.375 & 219,900,000 &   287.748 & 289.426 & 0.9942\\
  \hline
 \end{tabular}
-\end{center}
+}
+\caption{Computation time measured in milliseconds for the global-memory and shared-memory implementations.}\label{tbl:sharedVs_Global}
+\end{table}
 
-Table~\ref{tbl:sharedVs_Global} compares the speed up of Global memory vs shared memory.
+Table~\ref{tbl:sharedVs_Global} compares the speed-up of Global memory vs shared memory.
 On a smaller grid, shared memory provides a strong $1.5 \times$ speedup.
 Each thread block fits comfortably into shared memory. However, as the
 grid size begins to increase, shared memory begins to lose its edge. 
@@ -1037,30 +1108,48 @@ latency-sensitive workloads, reducing global memory traffic
 through data reuse, and scenarios where energy efficiency or 
 memory bandwidth are the primary bottleneck rather than raw throughput~\cite{mei2016dissectinggpumemoryhierarchy}.
 
-These results can be combined with the results from ealier sections~\ref{sec:explicit} and~\ref{sec:PythonOpt}
+\subsection{CPU vs GPU}
+This section combines the results from 
+Sections~\ref{sec:explicit} and~\ref{sec:PythonOpt} 
+to compare the CPU, Numba, and CUDA implementations 
+directly. The first table reports the relative 
+speed-ups, while the second gives the corresponding 
+execution times.
 
-The speedup between both CPU and GPU implementations is outlined below. 
-
-\begin{center}
+\begin{table}[H]
+\centering
+\makebox[\textwidth][c]{%
 \begin{tabular}{||c c c||} 
  \hline
- Spatial Step & Speed up CPU vs GPU Global & Numba vs GPU Shared\\ [0.5ex]
+ Spatial Step & Speed-up ($\times$): CPU vs GPU Global & Speed-up ($\times$): Numba vs GPU Shared\\ [0.5ex]
  \hline\hline
- 3     & 99.57224169041167 & 10.616215546352999 \\ 
+ 3     & 99.572 & 10.616 \\ 
  \hline
- 1.5   & 183.88803667764006 & 3.585871350941489 \\
+ 1.5   & 183.888 & 3.585 \\
  \hline
- 0.75  & 400.954563598574 & 2.645404249383979 \\
+ 0.75  & 400.954 & 2.645 \\
  \hline
- 0.375 & 949.6851411651862 & 3.9583246451756398  \\
+ 0.375 & 949.685 & 3.958  \\
  \hline
 \end{tabular}
-\end{center}
-Overall, the GPU comes out on top, achieving a significant speed-up against the CPU.
-Even the baseline implementation appears to outperform both Python implementations. 
-The full \ps{FIX}
+}
+\caption{Speed-up comparison between CPU, Numba, and CUDA explicit finite-difference implementations.}
+\label{tab:explicit-speedups}
+\end{table}
 
-\begin{center}
+The results show that the CUDA 
+implementations consistently outperform 
+the CPU and Numba versions. The GPU 
+global-memory kernel is between 
+approximately $100\times$ and $950\times$ 
+faster than the CPU implementation, while 
+the shared-memory kernel is between about 
+$2.6\times$ and $10.6\times$ faster than the 
+Numba version.
+
+\begin{table}[H]
+\centering
+\makebox[\textwidth][c]{%
 \begin{tabular}{||c c c c c||} 
  \hline
  Spatial Step & CPU (ms) & Numba (ms) & GPU Global (ms) & GPU Shared (ms) \\ [0.5ex]
@@ -1074,31 +1163,53 @@ The full \ps{FIX}
  0.375 & 273,270 & 1139 & 287.748 & 289.426 \\
  \hline
 \end{tabular}
-\end{center}
+}
+\caption{Execution-time comparison between CPU, Numba, and CUDA explicit finite-difference implementations.}
+\label{tab:explicit-execution-times}
+\end{table}
+
+The execution times show that CPU runtime 
+increases sharply as the spatial step decreases, 
+whereas the GPU runtimes remain comparatively 
+stable. This explains the large increase 
+in speed-up at finer spatial resolutions. 
+The shared-memory kernel is faster than the 
+global-memory kernel for the coarser grid 
+settings, although this advantage narrows 
+at the smallest spatial step. Overall, the 
+GPU provides the best performance, with the 
+greatest benefit appearing when the problem 
+size becomes larger.
+
 
 \section{Monte Carlo}\label{sec:MCBencmark}
 Monte Carlo was also benchmarked against the CPU implementation
-using varying grid sizes. 
+using varying grid sizes ranging from $2^2$ to $2^25$. 
 
-\begin{center}
+\begin{table}[H]
+\centering
+\makebox[\textwidth][c]{%
 \begin{tabular}{||c c c c c ||} 
  \hline
- Grid Size & Power of 2 & CPU Time Taken (ms) & GPU Time Taken (ms) & Speed Up $\left(\%\right)$\\ [0.5ex] 
+ Grid Size & Power of 2 & CPU Time Taken (ms) & GPU Time Taken (ms) & Speed-up ($\times$)\\ [0.5ex] 
  \hline\hline
- 65,536 & $2^{16}$ & 3.03077698 & 9.07162 & 0.3340943491901116 \\ 
+ 65,536 & $2^{16}$ & 3.030 & 9.071 & 0.334 \\ 
  \hline
- 262,144 & $2^{18}$ & 11.97242737 & 9.67373 & 1.2376226512420752  \\
+ 262,144 & $2^{18}$ & 11.972 & 9.673 & 1.237  \\
  \hline
- 1,048,576 & $2^{20}$ &  50.22287369 & 9.3143 & 5.392018046444714 \\
+ 1,048,576 & $2^{20}$ &  50.222 & 9.314 & 5.392 \\
  \hline
- 4,194,304 & $2^{22}$ & 196.63167 & 9.69728 & 20.276992105002645 \\
+ 4,194,304 & $2^{22}$ & 196.631 & 9.697 & 20.276 \\
  \hline
- 16,777,216 & $2^{24}$  & 836.00306511 & 10.4386 & 80.08766167014734 \\ 
+ 16,777,216 & $2^{24}$  & 836.003 & 10.438 & 80.087 \\ 
  \hline
- 33,554,432 & $2^{25}$  & 2006.6242218 &  11.0386 & 181.7824925081079 \\ 
+ 33,554,432 & $2^{25}$  & 2006.624 &  11.0386 & 181.782 \\ 
  \hline
 \end{tabular}
-\end{center}
+}
+\caption{Monte Carlo runtime comparison between CPU and GPU implementations.}
+\label{tab:mc-cpu-gpu-benchmark}
+\end{table}
 \begin{figure}[H]
   \centering
   \input{tikz/cpuVsGPUMCarlo.tex}
@@ -1106,7 +1217,7 @@ using varying grid sizes.
   \label{fig:cpu-gpu-monte-carlo-runtime}
 \end{figure}
 
-Table~\ref{fig:cpu-gpu-monte-carlo-runtime} presents the CPU vs GPU times at various grid sizes.
+Table~\ref{tab:mc-cpu-gpu-benchmark} presents the CPU vs GPU times at various grid sizes.
 At smaller grid sizes, the GPU performs worse than the CPU.
 This can be attributed to the overhead costs of launching the kernel
 and memory transfer between the host and device. 
@@ -1116,7 +1227,7 @@ while the GPU remains stable. The near-constant GPU runtime
 across increasing path counts indicates that the workload
 is effectively saturating available parallelism. 
 This suggests that the kernel is compute-bound rather 
-than memory-bound for larger problem sizes.
+than memory-bound for larger problem sizes~\cite{crovella2020gpuperformance}.
 
 Beyond $2^{20}$ elements of the GPU demonstrated increasingly substantial speed-ups, 
 reaching $181.78\times$ at $2^{25}$
@@ -1126,15 +1237,18 @@ meaning that increasing the problem size primarily increases
 thread utilisation rather than execution time. 
 
 \section{Design}
-The design process for the BSE and MC followed the workflow shown in Figure~\ref{fig:design_process}. The first stage, \textit{Plan on Paper}, involved designing the solution on paper. This included solving equations by hand, such as the explicit solution to the BSE in \ref{eq:exp}, discretising the GBM, and planning the overall code implementation.
+The design process for the BSE and MC followed the workflow shown in Figure~\ref{fig:design_process}. The first stage, \textit{Plan}, 
+involved designing the solution on paper. 
+This included solving equations by hand, 
+such as the explicit solution to the BSE 
+in~\ref{eq:exp}, discretising the GBM, 
+and planning the overall code implementation.
 \begin{figure}[H]
     \centering
     \resizebox{0.72\textwidth}{!}{\input{tikz/design_process.tex}}
     \caption{Design process for Explicit Solver.}
     \label{fig:design_process}
 \end{figure}
-
-
 
 Once the initial design was complete, 
 Jupyter notebooks and Google Colab were used for rapid 
@@ -1143,7 +1257,7 @@ different implementations and libraries with minimal setup.
 
 Validated code was then transferred into the project 
 as Python modules, where it was refined, 
-version-controlled, tested for regressions,
+version-controlled, tested
 and used to generate plots exported as \textit{tex} 
 files for inclusion in the dissertation.
 
@@ -1153,32 +1267,58 @@ and iteratively optimised for performance.
 The final CUDA version was then benchmarked, 
 and the results were plotted in Python.
 
-The project is in the form of a mono repo.
-Each file represents a different component
+The explicit solution is in the form of a mono repo.
+Each folder represents a different component
 The architectural diagram for the CPU implementation
 is shown in Figure~\ref{fig:architecture}.
 \begin{figure}[H]
   \centering
-  \resizebox{\textwidth}{!}{\input{tikz/architecture.tex}}
-  \caption{Architecture of the Python option-pricing package and its test structure.}
+  \resizebox{0.95\textwidth}{!}{\input{tikz/architecture.tex}}
+  \caption{Architecture of the Python Black--Scholes explicit-pricing module.}
   \label{fig:architecture}
 \end{figure}
 
 
-The project was organised into separate components. 
-The \texttt{BSE\_Explicit} module contains the code for 
-the numerical solution of the Black--Scholes equation, 
-with one class for pricing European call and put options 
-and a separate class for pricing down-and-out calls.
+The \texttt{BSE\_Explicit} module outlined in~\ref{fig:architecture} contains the code for the numerical 
+solution of the Black--Scholes equation. It includes one class for pricing 
+European call and put options, a separate class for pricing down-and-out 
+calls, and a plotting class for generating option-price surfaces. 
+Error handling is implemented throughout this module to reject 
+invalid inputs, such as negative strike prices, and to detect 
+numerical issues such as overflow. This ensures that the program
+exits early rather than continuing with invalid calculations.
 
-The module titled \texttt{Brownian\_Motion}, contained
-simulations of The Brownian motion and GBM. 
 
-Within the modules Juptyer notebooks were used
-Firstly plotting of graphs and benchmarking.
-This made visualisation easier and allowed 
-generated data to be manipulated without rerunning the 
-full program each time.
+\begin{figure}[H]
+  \centering
+  \resizebox{0.95\textwidth}{!}{\input{tikz/brownian_motion.tex}}
+  \caption{Architecture of the Python G\_Brownian\_Motion module.}
+  \label{fig:bmArch}
+\end{figure}
+
+The \texttt{Brownian\_Motion} module shown in Figure~\ref{fig:bmArch} contains Jupyter 
+notebooks for simulating Brownian motion and geometric Brownian motion, 
+together with code for plotting the resulting paths. It also includes the 
+Monte Carlo implementation for pricing European options, which extends the 
+geometric Brownian motion model introduced earlier.
+
+Both unit and integration testing were carried out and are 
+discussed in section~\ref{sec:testing}.
+
+The CUDA code follows a similar structure. 
+The Monte Carlo and Black--Scholes implementations 
+are organised into separate directories, with functions 
+split across the corresponding header and \texttt{.cuh} files. 
+Because there is no Jupyter-based workflow for running CUDA code, 
+a console-based interface was developed to make benchmarking easier. 
+This interface allows the user to choose between the 
+Monte Carlo and Black--Scholes solvers, enter 
+option parameters or select preset examples, 
+and then view the computed option value together 
+with the execution time. Error handling was also added to 
+reject invalid inputs and to verify that a CUDA-enabled 
+GPU is available before execution.
+
 
 The design process for~\ref{ch:ExtHeston} followed a slightly different pattern. 
 \begin{figure}[H]
@@ -1213,7 +1353,7 @@ the final \textit{Run with SOTA LLM} stage was
 carried out. Once OpenEvolve had completed, 
 the results were collected and plotted.
 
-\section{Testing}
+\section{Testing}\label{sec:testing}
 For both repositories~\cite{heston_estimator} and~\cite{yalcin_finalyearproject},
 testing followed a similar structure. \textit{Pytest} was the framework used
 for testing. Unit tests were written 
@@ -1224,7 +1364,7 @@ Integration tests were then used to verify that
 these components worked correctly together. For
 example, one integration test compares the price
 produced by the Monte Carlo implementation with
-the corresponding closed-form solution.
+the closed-form solution to the BSE.
 
 A GitHub workflow was also created for 
 both repositories to run the
@@ -1239,7 +1379,7 @@ tests developed for the project can be found in~\ref{apex:tests}.
 \chapter{Extension to the Heston Model}\label{ch:ExtHeston}
 The BSE described in~\ref{sec:BSE} assumes
 that volatility $\sigma$ is constant, this assumption
-is inaccurate with emperical market data. 
+is inaccurate with empirical market data. 
 
 The Heston model is a widely used nonlinear
 stochastic volatility model, but in practice, its variance process is unobserved (latent)~\cite{heston2015}. 
@@ -1285,7 +1425,7 @@ and latent variables simultaneously
 as this problem comes with significant challenges in terms of 
 identifiability, numerical stability, and computational cost. 
 In particular, careful tuning of prior distributions, 
-consideration of possible reparametrizations, and the imposition 
+consideration of possible reparametrisations, and the imposition 
 of structural constraints, such as the Feller condition, may be required. 
 This process can be highly time-consuming.
 
@@ -1294,7 +1434,7 @@ We approach Heston estimation as a Bayesian inference problem
 for a nonlinear state-space system, with both the latent volatility
 path and the model parameters inferred jointly from observed data.
 Since this inference problem is sensitive to the choice of priors,
-reparametrizations, and numerical constraints, we define a composite
+reparametrisations, and numerical constraints, we define a composite
 score that combines fit to the observed data with posterior and MCMC
 diagnostics, including convergence, effective sampling, and posterior
 shape (gauging multimodality and ridge-like geometries);
@@ -1343,10 +1483,10 @@ goes to $\theta$ at an exponential rate $\kappa$ as $t\to\infty$.
 Next, we derive a discrete-time state-space approximation suitable for 
 Bayesian estimation of the parameters.
 
-\subsection{Discretization}
+\subsection{Discretisation}
 We use the subscript $k\in\N$ to refer to the discrete versions of the above
 continuous-time quantities.
-Before we discretize, we apply It\^{o}'s lemma~\cite{oksendal2014stochastic} 
+Before we discretise, we apply It\^{o}'s lemma~\cite{oksendal2014stochastic} 
 with $g(s) = \ln s$, for which $g'(s) = 1/s$ and $g''(s) = -1/s^2$; let us define 
 $\Lambda_k = g(S_k)$. The application of the lemma gives 
 \begin{equation}
@@ -1428,14 +1568,14 @@ Overall, we have a discrete-time model of the form
 Given observations $y_0, \ldots, y_{N-1}$
 the objective is to estimate the parameter vector $\eta$, 
 the full states $x_0, \ldots, x_{N}$, 
-and the realizations of the process noise, $w_0, \ldots, w_{N-1}$.
+and the realisations of the process noise, $w_0, \ldots, w_{N-1}$.
 To this end, we follow a Bayesian estimation approach,
 which is introduced in the following section.
 
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.99\linewidth]{figures/heston.png}
+    \includegraphics[width=0.68\linewidth]{figures/heston.png}
     \caption{Simulation of a Heston model (200 paths) with 
     $S_0 = 1$,
     $v_0 = 0.09$, 
@@ -1495,7 +1635,7 @@ Next, by~\eqref{eq:ss:y},
         \exp\left(-\frac{(y_k - \Lambda_k)^2}{2\sigma_n^2}\right).
 \end{align}
 Having determined $p(x_{0:N}, w_{0:N-1}, \eta | y_{0:N-1})$,
-we can marginalize to determine $p(\eta | y_{0:N-1})$.
+we can marginalise to determine $p(\eta | y_{0:N-1})$.
 To this end, posterior inference is carried out using 
 Markov chain Monte Carlo (MCMC)~\cite{Brooks2011}.
 MCMC generates samples from a Markov chain whose stationary distribution 
@@ -1508,7 +1648,7 @@ statistically well behaved: we favour posterior marginals that are
 reasonably regular and, ideally, unimodal, since strong multimodality, 
 ridges, and funnel-like geometries often indicate \textit{weak identifiability}
 (cf. Fig.~\ref{fig:posterior-geometries}), 
-which calls for either reconsidering the priors or reparametrization 
+which calls for either reconsidering the priors or reparametrisation 
 of the model.
 \input{tikz/posteriors_good_bad.tex}
 
@@ -1568,7 +1708,7 @@ and reduce the problem of assessing connectedness of that discrete approximation
 to the connectedness of the associated graph, $\mathcal{G}_\gamma = (V_\gamma, E_\gamma)$.
 Each vertex in $V_\gamma$ corresponds to a grid point, and a pair of 
 vertices are linked by an edge if the grid points are adjacent.
-Using connected-component labeling~\cite{HeXiwei2017} we determine the number of components; 
+Using connected-component labelling~\cite{HeXiwei2017} we determine the number of components; 
 each connected component corresponds to a distinct high-density region, 
 and multiple components at high levels provide evidence against unimodality.
 We set $\alpha = 0.7$ so that the analysis focuses on the high-density region 
@@ -1676,7 +1816,7 @@ We define the effective sampling score
 \textit{Divergences.} Numerical divergences of the Hamiltonian 
 MC sampler are highly undesirable as they can hint towards a ``bad''
 (e.g., funnel-like) geometry, or a large step size of the solver.
-We penalize the number of divergences, $\mathrm{div}$, strongly
+We penalise the number of divergences, $\mathrm{div}$, strongly
 by introducing the score 
 \begin{equation}
     s_{\rm div} = \frac{1}{1+\mathrm{div}}.
@@ -1828,9 +1968,9 @@ We ran 75 iterations of OpenEvolve using a mix of ChatGPT 5.4 (40\% of the time)
 and Gemini 3 Flash (60\% of the time).
 \begin{figure}[htpb]
     \centering
-    \includegraphics[width=0.95\linewidth]{images/initial_synth_price.png}\\
-    \includegraphics[width=0.95\linewidth]{images/variance.png}
-    \caption{(Top) The red line shows the simulated asset price path generated from the Heston model using known parameters. The gray thin lines in the background are samples of the posterior distribution of $S_k$ corresponding to the best model determined by openevolve. (Bottom) Corresponding actual path of $v_k$ (red line) and samples from the posterior distribution of $v_k$.
+    \includegraphics[width=0.68\linewidth]{images/initial_synth_price.png}\\
+    \includegraphics[width=0.68\linewidth]{images/variance.png}
+    \caption{(Top) The red line shows the simulated asset price path generated from the Heston model using known parameters. The gray thin lines in the background are samples of the posterior distribution of $S_k$ corresponding to the best model determined by OpenEvolve. (Bottom) Corresponding actual path of $v_k$ (red line) and samples from the posterior distribution of $v_k$.
     }
    \label{fig:synthetic:S}
 \end{figure}
@@ -1842,7 +1982,7 @@ around the true path, which was unknown to the model.
 Likewise, $S_k$ sits well among paths drawn from the corresponding posterior
 of the best model.
 This is evidence, that the estimated Heston model fits the observations 
-of $S_k$ and offers good estimates of the lateral variable, $v_k$.
+of $S_k$ and offers good estimates of the latent variable, $v_k$.
 
 The prior distributions of the best program computed by 
 OpenEvolve are as follows:
@@ -1856,17 +1996,17 @@ implying a log-normal prior on $\nu_0$.
 
 In Table~\ref{tab:synthetic:parameter-comparison} 
 we present the posterior estimates of the initial and 
-best program computed by openevolve.
+best program computed by OpenEvolve.
 The scores of the initial and best program are shown 
 in Table~\ref{tab:synthetic:scores}.
 Although the exact values of the model parameters
 are not estimated accurately, as we see in Table 
 ~\ref{tab:synthetic:parameter-comparison}, 
-openevolve achieves a $+0.185$ increase in the 
+OpenEvolve achieves a $+0.185$ increase in the 
 posterior predictive score, at the expense of a 
 decrease in the ESS score, which is, nonetheless,
 not critical.
-In other words, it achieves a tigher fit of the model 
+In other words, it achieves a tighter fit of the model 
 on the data.
 We will now turn to a more interesting case 
 using actual stock price data.
@@ -1925,9 +2065,10 @@ FTSE All-World Index (Ticker: \texttt{VWCDE.DE}) over a three-year period.
 The corresponding price series is shown in Figure~\ref{fig:ftse}.
 \begin{figure}[htpb]
       \centering
-      \includegraphics[width=0.95\linewidth]{images/modeplotsynth.png}
+      \includegraphics[width=0.68\linewidth]{images/modeplotsynth.png}
+      \includegraphics[width=0.68\linewidth]{images/var_stock.png}
       \caption{(Top) Adjusted closing price of \texttt{VWCDE.DE} over a three-year period; the red line shows the observed 
-      data, and the the thin gray lines are samples from the 
+      data, and the thin gray lines are samples from the 
       posterior marginal of $S_t$ corresponding to the best 
       model. (Bottom) Corresponding samples of the instantaneous volatility.}
       \label{fig:ftse}
@@ -1979,7 +2120,7 @@ $s_{\rm s}$                & 0.857\\
 
 
 
-Afer 60 iterations, OpenEvolve made some significant changes to the code,
+After 60 iterations, OpenEvolve made some significant changes to the code,
 mainly to the priors. In particular, the estimated $\hat{\theta}$, was 
 capped from below at $2 \cdot 10^{-4}$.
 This change ensures that when the sample variance is very small, 
@@ -2007,7 +2148,7 @@ bounded away from 0, that is
     \end{align}
 \end{subequations}
 OpenEvolve also modified the Heston discretisation by 
-introducing a smoothing intro the $v$-updates by 
+introducing smoothing into the $v$-updates by 
 defining
 \begin{equation}
 v_{{\rm mid}, k} = \tfrac{1}{2}\left(v_k + v_{k+1}\right),
@@ -2066,7 +2207,7 @@ allow the results to be inspected after an OpenEvolve run.
 The system requirements can be divided into functional and non-functional requirements.
 Functionally, the Black--Scholes framework must simulate geometric Brownian motion paths,
 price European call and put options using both Monte Carlo simulation and 
-an explicit FDM's, while applying the
+an explicit finite-difference method, while applying the
 correct terminal and boundary conditions,
 compare numerical prices with the 
 closed-form Black--Scholes solution, 
@@ -2178,7 +2319,6 @@ which extends the Heston model by adding a Poisson-driven jump component to asse
 \bibliography{bibliography}
 \chapter{Appendices}\label{ch:appendix}
 
-
 \Needspace{8\baselineskip}
 \section{Requirements Table}
 
@@ -2279,7 +2419,7 @@ which extends the Heston model by adding a Poisson-driven jump component to asse
   The system shall prevent negative variance values during simulation and inference using smooth
   positivity-preserving transformations. & High \\
   \hline
-  FR-5 & OpenEvolve & The system will use OpenEvolve for Evolutionary Search, using Gemini and GPT-4.4. & High \\
+  FR-5 & OpenEvolve & The system will use OpenEvolve for Evolutionary Search, using Gemini and GPT-5.4. & High \\
   \hline
   FR-6 & Bayesian inference &
   The system shall perform posterior inference using MCMC sampling with configurable numbers of chains,
@@ -2310,7 +2450,7 @@ which extends the Heston model by adding a Poisson-driven jump component to asse
   NFR-1 & Testability &
   The system shall provide automated tests for deterministic simulation, parameter sampling, CSV parsing,
   diagnostics, and optional integration against saved inference data. &
-  Unit and integration tests under \texttt{heston-\allowbreak openevolve/\allowbreak tests}. \\
+  Unit and integration tests under \texttt{heston-\allowbreak OpenEvolve/\allowbreak tests}. \\
   \hline
 \end{longtable}
 }
@@ -2360,7 +2500,7 @@ both repositories are detailed below.
 & Passed \\
 \hline
 \texttt{test\_\allowbreak smooth\_\allowbreak clamp\_\allowbreak np\_\allowbreak keeps\_\allowbreak values\_\allowbreak above\_\allowbreak floor}
-& Ensures that the smooth clamp keeps all values above the specified numerical floor while preserving ordering behavior.
+& Ensures that the smooth clamp keeps all values above the specified numerical floor while preserving ordering behaviour.
 & Passed \\
 \hline
 \texttt{test\_\allowbreak sample\_\allowbreak params\_\allowbreak draws\_\allowbreak required\_\allowbreak posterior\_\allowbreak variables}
