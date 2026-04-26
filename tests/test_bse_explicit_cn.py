@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from Bse_Explicit import bse_explicit_cn as cn
+from Bse_Explicit import bse_explicit_call_put as cn
 
 
 def test_number_of_days_asset_level_returns_zero_float64_grid():

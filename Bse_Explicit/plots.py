@@ -3,7 +3,7 @@ import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
 
-from bse_explicit_cn import bse_exp_call
+from bse_explicit_call_put import bse_exp_call
 
 
 def gpu_main():

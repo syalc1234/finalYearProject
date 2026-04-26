@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from Bse_Explicit import bse_explicit_cn as cn
+from Bse_Explicit import bse_explicit_call_put as cn
 
 
 def _normal_cdf(value):

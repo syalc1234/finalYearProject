@@ -5,9 +5,9 @@ import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
 
-from Bse_Explicit.bse_explicit_cn import set_right_boundary_condition
-from Bse_Explicit.bse_explicit_cn import set_boundary_condition_bottom
-from Bse_Explicit.bse_explicit_cn import number_of_days_asset_level
+from Bse_Explicit.bse_explicit_call_put import set_right_boundary_condition
+from Bse_Explicit.bse_explicit_call_put import set_boundary_condition_bottom
+from Bse_Explicit.bse_explicit_call_put import number_of_days_asset_level
 
 
 def bse_exp_down_out(sigma, risk_free_rate, time_to_exp, K, N, spatial_step, S0, barrier):

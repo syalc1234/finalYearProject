@@ -18,5 +18,5 @@ def imp_vol( r, T, K, S, market_price, option_type="call" ):
     model_price = bse_analytical(sigma, r, T, K, S, "call")
     return model_price - market_price
   implied_volatility = sp.optimize.brentq(objective_function,1e-5,5.0)
-  print(f"Implied Vol {iv:.2%}")
+  print(f"Implied Vol {implied_volatility:.2%}")
   return implied_volatility
