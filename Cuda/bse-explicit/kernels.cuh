@@ -10,5 +10,11 @@ struct BseExplicitResult
 };
 
 BseExplicitResult priceBlackScholesExplicitCall(const optionTypeBSE& settings);
+BseExplicitResult priceBlackScholesExplicitPut(const optionTypeBSE& settings);
+
+// Shared-memory variants use the same finite-difference scheme but cache
+// neighbouring grid values inside each CUDA block.
+BseExplicitResult priceBlackScholesExplicitSharedCall(const optionTypeBSE& settings);
+BseExplicitResult priceBlackScholesExplicitSharedPut(const optionTypeBSE& settings);
 
 #endif //CUDA_BSE_EXPLICIT_KERNELS_CUH

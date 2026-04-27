@@ -55,6 +55,7 @@ int readMenuChoice(const std::string& prompt, int minChoice, int maxChoice)
     }
 }
 
+// Built-in Monte Carlo scenarios used when the user selects a preset.
 optionTypeMC getMonteCarloPreset(int optionType)
 {
     switch (optionType) {
@@ -67,6 +68,7 @@ optionTypeMC getMonteCarloPreset(int optionType)
     }
 }
 
+// Built-in finite-difference scenarios used when the user selects a preset.
 optionTypeBSE getBsePreset(int optionType)
 {
     switch (optionType) {
@@ -74,15 +76,12 @@ optionTypeBSE getBsePreset(int optionType)
             return {0.1730f, 0.0375f, 0.0548f, 275.00f, 0.375f, 274.80f, 100000.0f};
         case 2:
             return {0.25f, 0.05f, 1.0f, 105.0f, 1.0f, 100.0f, 1000.0f};
-        case 3:
-            return {0.2f, 0.05f, 1.0f, 100.0f, 1.0f, 95.0f, 1000.0f};
-        case 4:
-            return {0.2f, 0.05f, 1.0f, 100.0f, 1.0f, 95.0f, 1000.0f};
         default:
             return {};
     }
 }
 
+// Reads either preset or custom inputs for the Monte Carlo pricer.
 optionTypeMC readMonteCarloSettings(int optionType)
 {
     std::cout << "\n1) Enter your own values\n";
@@ -106,6 +105,7 @@ optionTypeMC readMonteCarloSettings(int optionType)
     return {s0, mu, sigma, strikeK, r, numberPaths, numberSteps, timeToExpiry};
 }
 
+// Reads either preset or custom inputs for the Black-Scholes explicit pricer.
 optionTypeBSE readBseSettings(int optionType)
 {
     std::cout << "\n1) Enter your own values\n";
@@ -128,6 +128,7 @@ optionTypeBSE readBseSettings(int optionType)
     return {sigma, riskFreeRate, timeToExp, strikeK, spatialStep, currentPrice, n};
 }
 
+// Runs the CUDA Monte Carlo call simulation and averages discounted payoffs.
 PricingResult runMonteCarloCall(const optionTypeMC& settings)
 {
     cudaEvent_t start{};
@@ -161,6 +162,7 @@ PricingResult runMonteCarloCall(const optionTypeMC& settings)
     return {optionPrice, elapsedMs};
 }
 
+// Uses put-call parity to derive the put from the Monte Carlo call estimate.
 PricingResult runMonteCarloPut(const optionTypeMC& settings)
 {
     PricingResult result = runMonteCarloCall(settings);
@@ -169,9 +171,12 @@ PricingResult runMonteCarloPut(const optionTypeMC& settings)
     return result;
 }
 
-void runBlackScholesExplicitCall(const optionTypeBSE& settings)
+// Runs the CUDA explicit finite-difference call pricer.
+void runBlackScholesExplicitCall(const optionTypeBSE& settings, bool useSharedMemory)
 {
-    std::cout << "\nBlack-Scholes Explicit Call selected.\n";
+    std::cout << (useSharedMemory
+        ? "\nBlack-Scholes Explicit Shared-Memory Call selected.\n"
+        : "\nBlack-Scholes Explicit Standard Call selected.\n");
     std::cout << "Current preset/custom settings:\n";
     std::cout << "sigma=" << settings.sigma
               << ", r=" << settings.risk_free_rate
@@ -182,7 +187,9 @@ void runBlackScholesExplicitCall(const optionTypeBSE& settings)
               << ", N=" << settings.N << '\n';
 
     try {
-        const BseExplicitResult result = priceBlackScholesExplicitCall(settings);
+        const BseExplicitResult result = useSharedMemory
+            ? priceBlackScholesExplicitSharedCall(settings)
+            : priceBlackScholesExplicitCall(settings);
         std::cout << "Option Price: " << result.price << '\n';
         std::cout << "Time-Step Kernel Loop (ms): " << result.timestepKernelMs << '\n';
     } catch (const std::exception& ex) {
@@ -190,9 +197,12 @@ void runBlackScholesExplicitCall(const optionTypeBSE& settings)
     }
 }
 
-void runBlackScholesExplicitPut(const optionTypeBSE& settings)
+// Runs the CUDA explicit finite-difference put pricer.
+void runBlackScholesExplicitPut(const optionTypeBSE& settings, bool useSharedMemory)
 {
-    std::cout << "\nBlack-Scholes Explicit Put selected.\n";
+    std::cout << (useSharedMemory
+        ? "\nBlack-Scholes Explicit Shared-Memory Put selected.\n"
+        : "\nBlack-Scholes Explicit Standard Put selected.\n");
     std::cout << "Current preset/custom settings:\n";
     std::cout << "sigma=" << settings.sigma
               << ", r=" << settings.risk_free_rate
@@ -201,51 +211,30 @@ void runBlackScholesExplicitPut(const optionTypeBSE& settings)
               << ", dS=" << settings.spatial_step
               << ", S=" << settings.current_price
               << ", N=" << settings.N << '\n';
-    std::cout << "runBlackScholesExplicitPut()\n";
+
+    try {
+        const BseExplicitResult result = useSharedMemory
+            ? priceBlackScholesExplicitSharedPut(settings)
+            : priceBlackScholesExplicitPut(settings);
+        std::cout << "Option Price: " << result.price << '\n';
+        std::cout << "Time-Step Kernel Loop (ms): " << result.timestepKernelMs << '\n';
+    } catch (const std::exception& ex) {
+        std::cerr << "Black-Scholes explicit solver failed: " << ex.what() << '\n';
+    }
 }
 
-void runBlackScholesExplicitDownAndOutCall(const optionTypeBSE& settings)
+// Sends the selected finite-difference option type to the correct pricer.
+void dispatchBlackScholesExplicit(int implementationType, int optionType, const optionTypeBSE& settings)
 {
-    std::cout << "\nBlack-Scholes Explicit Down-and-Out Call selected.\n";
-    std::cout << "Current preset/custom settings:\n";
-    std::cout << "sigma=" << settings.sigma
-              << ", r=" << settings.risk_free_rate
-              << ", T=" << settings.time_to_exp
-              << ", K=" << settings.strike_K
-              << ", dS=" << settings.spatial_step
-              << ", S=" << settings.current_price
-              << ", N=" << settings.N << '\n';
-    std::cout << "runBlackScholesExplicitDownAndOutCall()\n";
-}
+    // Menu option 2 selects the shared-memory BSE implementation.
+    const bool useSharedMemory = implementationType == 2;
 
-void runBlackScholesExplicitDownAndOutPut(const optionTypeBSE& settings)
-{
-    std::cout << "\nBlack-Scholes Explicit Down-and-Out Put selected.\n";
-    std::cout << "Current preset/custom settings:\n";
-    std::cout << "sigma=" << settings.sigma
-              << ", r=" << settings.risk_free_rate
-              << ", T=" << settings.time_to_exp
-              << ", K=" << settings.strike_K
-              << ", dS=" << settings.spatial_step
-              << ", S=" << settings.current_price
-              << ", N=" << settings.N << '\n';
-    std::cout << "runBlackScholesExplicitDownAndOutPut().\n";
-}
-
-void dispatchBlackScholesExplicit(int optionType, const optionTypeBSE& settings)
-{
     switch (optionType) {
         case 1:
-            runBlackScholesExplicitCall(settings);
+            runBlackScholesExplicitCall(settings, useSharedMemory);
             break;
         case 2:
-            runBlackScholesExplicitPut(settings);
-            break;
-        case 3:
-            runBlackScholesExplicitDownAndOutCall(settings);
-            break;
-        case 4:
-            runBlackScholesExplicitDownAndOutPut(settings);
+            runBlackScholesExplicitPut(settings, useSharedMemory);
             break;
         default:
             std::cout << "Unsupported Black-Scholes Explicit option selected.\n";
@@ -253,6 +242,7 @@ void dispatchBlackScholesExplicit(int optionType, const optionTypeBSE& settings)
     }
 }
 
+// Sends the selected Monte Carlo option type to the correct pricer.
 void dispatchMonteCarlo(int optionType, const optionTypeMC& settings)
 {
     PricingResult result{};
@@ -304,13 +294,16 @@ int main()
     const int pricingMethod = readMenuChoice("Choose a pricing method: ", 1, 2);
 
     if (pricingMethod == 1) {
+        // Choose the finite-difference implementation before choosing call/put.
+        std::cout << "\n1) Standard/global memory BSE\n";
+        std::cout << "2) Shared memory BSE\n";
+        const int implementationType = readMenuChoice("Choose a Black-Scholes implementation: ", 1, 2);
+
         std::cout << "\n1) Call\n";
         std::cout << "2) Put\n";
-        std::cout << "3) Down and Out Call\n";
-        std::cout << "4) Down and Out Put\n";
-        const int optionType = readMenuChoice("Choose an option type: ", 1, 4);
+        const int optionType = readMenuChoice("Choose an option type: ", 1, 2);
         const optionTypeBSE settings = readBseSettings(optionType);
-        dispatchBlackScholesExplicit(optionType, settings);
+        dispatchBlackScholesExplicit(implementationType, optionType, settings);
     } else {
         std::cout << "\n1) Call\n";
         std::cout << "2) Put\n";
