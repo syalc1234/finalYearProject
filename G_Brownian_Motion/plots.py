@@ -4,7 +4,7 @@ import matplot2tikz
 import numpy as np
 from matplotlib import pyplot as plt
 
-from G_Brownian_Motion.Geometric_BM import gbm_lognormal_pdf, monte_carlo_call_put, normal_pdf
+from G_Brownian_Motion.Geometric_BM import monte_carlo_call_put
 from Bse_Explicit.bse_analytical import bse_analytical
 
 
@@ -92,69 +92,3 @@ def plot_benchmarks_gpu_cpu_MC():
     matplot2tikz.save("../plots_tex/cpuVsGPUMCarlo.tex", encoding="utf-8")
 
     fig.show()
-
-
-def plot_gbm_lognormal_distribution(
-    S0,
-    mu,
-    sigma,
-    T,
-    numofPaths=100_000,
-    bins=75,
-    rng=None,
-    ax=None,
-    tikz_filename=None,
-):
-    generator = np.random.default_rng() if rng is None else rng
-    z = generator.normal(0.0, 1.0, size=numofPaths)
-    ST = S0 * np.exp((mu - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * z)
-
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 6))
-    else:
-        fig = ax.figure
-
-    ax.hist(
-        ST,
-        bins=bins,
-        density=True,
-        alpha=0.6,
-        color="skyblue",
-        edgecolor="black",
-        label="Simulated GBM terminal prices",
-    )
-
-    x_max = np.percentile(ST, 99.5)
-    x_values = np.linspace(max(1e-8, ST.min()), x_max, 1000)
-    terminal_mean = S0 * np.exp(mu * T)
-    terminal_variance = (S0**2) * np.exp(2.0 * mu * T) * (np.exp(sigma**2 * T) - 1.0)
-    terminal_std = np.sqrt(terminal_variance)
-
-    ax.plot(
-        x_values,
-        gbm_lognormal_pdf(x_values, S0, mu, sigma, T),
-        color="crimson",
-        linewidth=2,
-        label="Theoretical lognormal PDF",
-    )
-    ax.plot(
-        x_values,
-        normal_pdf(x_values, terminal_mean, terminal_std),
-        color="green",
-        linewidth=2,
-        linestyle="--",
-        label="Normal comparison PDF",
-    )
-
-    ax.set_title("Lognormal Distribution of GBM Terminal Prices")
-    ax.set_xlabel(r"Terminal price $S_T$")
-    ax.set_ylabel("Density")
-    ax.grid(True, alpha=0.3)
-    ax.legend()
-
-    if tikz_filename is not None:
-        matplot2tikz.save(tikz_filename, encoding="utf-8")
-
-    return fig, ax, ST
-
-
