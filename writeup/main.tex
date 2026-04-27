@@ -49,14 +49,14 @@
 \providecommand{\tikzsetnextfilename}[1]{}
 
 \begin{document}
-
+\nocite{yalcin_finalyearproject,heston_estimator,bse40360770}
 \begin{titlepage}
     \centering
 
     \vspace*{3cm}
 
    {\LARGE \textbf{Computational Methods in Quantitative Finance: 
-    GPU-Accelerated Option Pricing and Heston Model Parameter Calibration 
+    GPU-accelerated Option Pricing and Heston Model Parameter Calibration 
     via Evolutionary Program Search} \par}
     \vspace{2cm}
 
@@ -103,7 +103,7 @@ Science dissertation submitted for assessment.\\[0.3cm]
 \textbf{Student Name:} Sean Yalcin & \textbf{Student Number:} 40360770 \\
 \\[0.8cm]
 \textbf{Project Title:} Computational Methods in Quantitative Finance:
-GPU-Accelerated Option Pricing and Heston Model Parameter
+GPU-accelerated Option Pricing and Heston Model Parameter
 Calibration via Evolutionary Program Search & \\
 \\[0.8cm]
 \textbf{Supervisor:} Dr. Pantelis Sopasakis & \\
@@ -177,7 +177,7 @@ execution-based scoring. The evolved models improve predictive fit,
 although exact parameter recovery remains difficult because of the 
 identifiability and geometry of the Heston model.
 
-Overall, the dissertation shows that GPU acceleration can 
+Overall, the dissertation shows that GPU-acceleration can 
 substantially improve option-pricing performance and that 
 agent-assisted evolution can support Bayesian inference for 
 stochastic-volatility models.
@@ -206,14 +206,14 @@ contract, which is why the equation needs numerical solutions.
 Efficient pricing using numerical methods, 
 requires many arithmetic operations, 
 which can be time consuming. The explicit solution is
-a good candidate for GPU acceleration.  
+a good candidate for GPU-acceleration.  
 Monte Carlo simulation offers a complementary 
 approach that is especially useful for pricing 
 exotic options, where the payoff structure 
 is more complex~\cite{GOBET2009497,xu2014highperformancefinancialsimulation}. 
 It is also well-suited to parallel computation, 
 making it particularly attractive 
-for GPU acceleration~\cite{BOYLE197732,cpe2862}.
+for GPU-acceleration~\cite{BOYLE197732,cpe2862}.
 
 A key limitation of the classical Black--Scholes model 
 is its assumption of constant volatility, which is often 
@@ -250,9 +250,9 @@ Chapter~\ref{ch:6} defines the system requirements and specifications, and Chapt
 
 \section{Aims and Objectives}
 \begin{itemize}
-    \item Implementation of an explicit finite difference solver for the Black Scholes Equation,
+    \item Implementation of an explicit finite difference solver for the Black--Scholes Equation,
     optimised by Numba and CUDA;
-    \item Development of a GPU accelerated Monte Carlo pricing for European Options
+    \item Development of a GPU-accelerated Monte Carlo pricing for European Options
     \item Benchmarking and analysis of CPU, Numba and GPU implementations
     \item Construct a Bayesian Estimator using PyMC for the parameters
     of the Heston model
@@ -291,7 +291,7 @@ Equation~\ref{eq:discGBM} is then used to simulate sample paths of the stock pri
     \label{fig:gbm}
 \end{figure}
 
-\section{The Black Scholes Equation and Options}\label{sec:BSE}
+\section{The Black--Scholes Equation and Options}\label{sec:BSE}
 An option is a financial contract whose value depends on an 
 underlying asset, such as a stock or a bond. In this project, 
 we consider European options, which can be exercised 
@@ -310,8 +310,8 @@ A European put gives the holder the right, but not the obligation, to sell the u
   V(S,T) = \max(K-S,0)
 \end{equation}
 
-\subsection{Derivation of the Black Scholes equation}
-The Black-Scholes Equation (BSE) is a 
+\subsection{Derivation of the Black--Scholes equation}
+The Black--Scholes Equation (BSE) is a 
 Partial Differential Equation (PDE) 
 widely used in finance to determine the price of European options.
 The BSE depends on the key parameters: 
@@ -324,7 +324,7 @@ profit without taking on risk, and there are no
 transaction costs or taxes associated with owning 
 the underlying.
 
-With these properties in mind, it is now possible to construct the Black-Scholes equation (BSE).
+With these properties in mind, it is now possible to construct the Black--Scholes equation (BSE).
 Let $V = V\left(S,t\right)$ denote the value of an option at time $t$ and stock price $S$.
 First, we can apply Itô's Lemma~\cite{alma991008758143208046} to~\ref{eq:GBM} we obtain:
 \begin{align}
@@ -400,7 +400,7 @@ by $dt$:
     + \frac{1}{2}\sigma^2 S^2 \frac{\partial^{2} V}{\partial S^2}
     = r V - rS\frac{\partial V}{\partial S}.
 \end{align}
-Rearranging yields the \textbf{Black-Scholes equation} (BSE):
+Rearranging yields the \textbf{Black--Scholes equation}:
 \begin{align}
     \frac{\partial V}{\partial t} 
     + rS\frac{\partial V}{\partial S}
@@ -505,7 +505,7 @@ parameter that is not directly observable in the market.
 Instead, it is inferred from the observed market price of 
 an option and is therefore called the \textit{implied volatility}. 
 More precisely, the implied volatility is the value of $\sigma$ that, 
-when substituted into the Black-Scholes pricing formula, produces the theoretical option value equal to the market price of the option.
+when substituted into the Black--Scholes pricing formula, produces the theoretical option value equal to the market price of the option.
 
 If $V_{\text{mkt}}$ denotes the observed market price, 
 then the implied volatility $\sigma_{\text{imp}}$ is defined implicitly by
@@ -769,7 +769,7 @@ year, with the remaining model parameters held constant.
 \end{figure}
 
 As shown in Figure~\ref{fig:MCcpuBenchmark}, the CPU runtime increases rapidly as the number of simulated paths grows. Increasing the path count from $2^{16}$ to $2^{25}$ raises the runtime from $3.031$ ms to $2006.624$ ms. 
-This demonstrates that, although Monte Carlo methods are simple and flexible, achieving higher accuracy on the CPU alone quickly becomes computationally expensive. Since each simulated path is independent, Monte Carlo methods are highly parallelisable and therefore well-suited to GPU acceleration.
+This demonstrates that, although Monte Carlo methods are simple and flexible, achieving higher accuracy on the CPU alone quickly becomes computationally expensive. Since each simulated path is independent, Monte Carlo methods are highly parallelisable and therefore well-suited to GPU-acceleration.
 
 \chapter{Implementation}\label{ch:imp}
 This chapter describes the implementation of the Monte Carlo model,
@@ -801,11 +801,11 @@ interpolation was used to obtain an accurate option value.
 In particular, \textit{CubicSpline}~\cite{2020SciPy-NMeth,scipy-cubicspline-docs} was used to estimate the option price at the required spot value.
 
 A full implementation is available in the accompanying GitHub repository~\cite{yalcin_finalyearproject}.
-The python package uses the same code from~\cite{yalcin_finalyearproject} pip package is published to PyPi~\cite{yalcin2026bse}
+The Python package uses the same code from~\cite{yalcin_finalyearproject} pip package is published to PyPi~\cite{yalcin2026bse}.
 
 \subsection{Optimisation}\label{sec:PythonOpt}
 The initial implementation serves as a baseline, as it relies only on arrays and standard NumPy operations. 
-Before moving to GPU acceleration, the Python implementation can be improved using the \textit{Numba} library. 
+Before moving to GPU-acceleration, the Python implementation can be improved using the \textit{Numba} library. 
 Numba provides a just-in-time (JIT) compiler via the \texttt{@jit} decorator, which translates Python functions into highly optimised machine code at runtime.
 
 Numba was chosen because it provided the best balance 
@@ -864,7 +864,7 @@ which was used to generate random numbers efficiently on the GPU.
 
 
 \subsection{Monte Carlo GPU Implementation}
-Monte Carlo pricing is well-suited to GPU acceleration because each simulation path can be evaluated independently. 
+Monte Carlo pricing is well-suited to GPU-acceleration because each simulation path can be evaluated independently. 
 Two device vectors are allocated using the Thrust library: 
 one stores the Gaussian random numbers used to generate terminal asset prices,
 and the other stores the discounted payoff for each simulated path. 
@@ -901,7 +901,7 @@ loop to handle larger workloads efficiently.
 
 \subsection{Why the Explicit Solver Can Also Benefit}\label{sec:ExplicitGPU}
 
-Although Monte Carlo is the more obvious candidate for GPU acceleration, 
+Although Monte Carlo is the more obvious candidate for GPU-acceleration, 
 the explicit finite difference solver can also benefit 
 from CUDA because each time level contains a large
 number of independent spatial updates. From Equation~\ref{eq:exp}, 
@@ -1230,7 +1230,7 @@ This suggests that the kernel is compute-bound rather
 than memory-bound for larger problem sizes~\cite{crovella2020gpuperformance}.
 
 Beyond $2^{20}$ elements of the GPU demonstrated increasingly substantial speed-ups, 
-reaching $181.78\times$ at $2^{25}$
+reaching $181.78\times$ at $2^{25}$.
 This behaviour is consistent with the GPU's massively parallel 
 architecture, where thousands of threads execute simultaneously,
 meaning that increasing the problem size primarily increases 
@@ -2287,7 +2287,7 @@ spatial grid is refined, but at increasing computational
 cost. Numba substantially reduced the runtime of 
 the Python implementation, while the
 CUDA implementations demonstrated the benefit of 
-GPU acceleration for large numerical workloads. 
+GPU-acceleration for large numerical workloads. 
 In particular, Monte Carlo simulation scaled
 well on the GPU because individual paths are 
 independent, whereas the explicit finite-difference 
@@ -2304,7 +2304,7 @@ The Heston extension demonstrated the potential
 of evolutionary algorithms driven by LLMs to produce meaningful Bayesian estimates 
 of the parameters and paths of the stochastic 
 Heston model—a 
-challenging task that otherwise requires significant effort by an expert
+challenging task that otherwise requires significant effort by an expert.
 The results are encouraging and can be extended to other stochastic models.
 Firstly, the approach could be benchmarked against established state-space 
 estimation methods for the Heston model, 
@@ -2315,17 +2315,74 @@ other models, such as the Bates model~\cite{Bates},
 which extends the Heston model by adding a Poisson-driven jump component to asset prices.
 
 
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 \bibliography{bibliography}
 \chapter{Appendices}\label{ch:appendix}
 
 \section{AI Usage Summary}
-This section details AI usage for this project.
+This section details AI usage for this project excluding
+the usage of it for OpenEvolve which is detailed in~\ref{sec:evolution}.
+
 AI was used was for two key reasons,
 overcoming technical difficulties
-and helping improve understanding of certain topics
-\subsection{Technical Challenges}
-When setting up CUDA 
+and helping improve understanding of certain topics.
+
+AI was also used to help run ollama on Kelvin2:
+Prompt used:
+You are an expert software engineer, working on Linux.
+I need your guidance fixing a version mismatch with ollama.
+I am trying to run version 0.17.7 but the version which
+is launched is 0.13.2.
+
+Images of response:
+\begin{center}
+\includegraphics[width=0.46\linewidth]{images/ollama_setup.png}
+\hfill
+\includegraphics[width=0.46\linewidth]{images/ollama_fix.png}
+\end{center}
+
+Another way it was used was for linux commands.
+Prompt:
+Can you guide me on how to properly use diff?
+when I do diff -w what is < and what is > which is the new which is the old:
+Images of response:
+\begin{center}
+\includegraphics[width=0.72\linewidth]{images/diff_command.png}
+\end{center}
+
+Trying to setup CUDA locally was challenging and 
+AI was used here to guide me
+as shown below.
+Prompt used:
+You are an expert software engineer. Can you
+help me understand why my code isn't running
+when connected to a remote GPU in cLion?
+Images of response:
+\begin{center}
+\includegraphics[width=0.72\linewidth]{images/cuda_build_issue.png}
+\end{center}
+\paragraph{Comparison with related methods and broader implications.}
+The Heston-estimation framework developed in this project has not yet been benchmarked directly against established alternatives such as extended Kalman filtering, unscented Kalman filtering, particle filtering, or gradient-based calibration methods. Those methods are generally more mature and often less computationally expensive in production settings, whereas the present Bayesian approach offers greater modelling flexibility and explicit uncertainty quantification over both parameters and latent variance paths. The use of OpenEvolve adds a further research contribution by allowing priors and model structure to be refined automatically, but it also increases computational cost and complexity. For this reason, the current system is best viewed as a research-oriented framework rather than a direct replacement for standard industrial calibration pipelines.
+
+From a broader perspective, the work has commercial and economic relevance because option-pricing and volatility models affect hedging, risk management, and computational cost in financial workflows. Faster GPU implementations may reduce runtime and infrastructure cost, but inaccurate calibration can introduce model risk and lead to poor downstream decisions if results are used uncritically. There are also legal and ethical considerations: market data must be used in accordance with licensing terms, confidential financial data should not be exposed to external AI services without appropriate safeguards, and AI-assisted modifications should remain subject to human verification. Accordingly, the system should be treated as a decision-support and research tool, not as an autonomous decision-making system.
+
+Another example was getting AI to verify my
+solution to the explicit FDM which I did on paper.
+Prompt used: 
+You are a quant finance expert. I am working
+on solving the BSE numerically. I have solved
+it on paper. Can you see if it is correct?
+If it isn't please help me understand where it is wrong
+without giving me the answer.
+
+Images of response: 
+\begin{center}
+\includegraphics[width=0.72\linewidth]{images/explicit_help.png}
+\end{center}
+\begin{center}
+\includegraphics[width=0.72\linewidth]{images/explicit_correct.png}
+\end{center}
+
 \Needspace{8\baselineskip}
 \section{Requirements Table}
 
@@ -2431,33 +2488,32 @@ When setting up CUDA
   FR-6 & Bayesian inference &
   The system shall perform posterior inference using MCMC sampling with configurable numbers of chains,
   draws, tuning steps, target acceptance probability, and computational cores. &
-  PyMC sampling with NumPyro/JAX backend and environment-configurable evaluator settings. \\
+  High \\
   \hline
   FR-7 & Multi-stage evaluation (Evaluator) &
   The system shall support staged evaluation so that weak candidates can be rejected before expensive
   full posterior evaluation. &
-  Stage 1 and Stage 2 evaluator functions with cascade evaluation enabled in configuration. \\
+  High \\
   \hline
   FR-8 & Posterior predictive checking (Evaluator) &
   The system shall evaluate whether posterior predictive simulations reproduce the observed price path
   and return dynamics. &
-  Posterior predictive score computed from replicated Heston paths and empirical prediction intervals. \\
+  High \\
   \hline
   FR-9 & MCMC diagnostics (Evaluator) &
   The system shall compute convergence and sampling-quality diagnostics, including divergences, $
   \widehat{R}$, effective sample size, and posterior multimodality. &
-  ArviZ diagnostics, divergence scoring, ESS scoring, and pairwise multimodality analysis. \\
+  High \\
   \hline
   FR-10 & Composite scoring (Evaluator) &
   The system shall combine predictive fit and diagnostic quality into a scalar score suitable for ranking
   candidate implementations. &
-  Weighted combined score using posterior predictive, $\widehat{R}$, divergence, ESS, and multimodality
-  scores. \\
+  High \\
   \hline
   NFR-1 & Testability &
   The system shall provide automated tests for deterministic simulation, parameter sampling, CSV parsing,
   diagnostics, and optional integration against saved inference data. &
-  Unit and integration tests under \texttt{heston-\allowbreak OpenEvolve/\allowbreak tests}. \\
+  Medium \\
   \hline
 \end{longtable}
 }

@@ -47,29 +47,31 @@ def option_price_from_terminal_prices(ST, K, r, T, option_type="call"):
 
 
 def monte_carlo_option_price(S0, K, r, sigma, T, numofPaths, timeSteps, option_type="call", rng=None):
-    # For European vanilla options under GBM, sampling the terminal distribution
-    # directly avoids allocating the full path matrix.
-    ST = simulate_terminal_prices(S0, r, sigma, T, numofPaths, rng=rng)
-    result = option_price_from_terminal_prices(ST, K, r, T, option_type=option_type)
+    from G_Brownian_Motion.Monte_Carlo import monte_carlo_option_price as _monte_carlo_option_price
 
-    return result
+    return _monte_carlo_option_price(
+        S0,
+        K,
+        r,
+        sigma,
+        T,
+        numofPaths,
+        timeSteps=timeSteps,
+        option_type=option_type,
+        rng=rng,
+    )
 
 
 def monte_carlo_call_put(S0, K, r, sigma, T, numofPaths, timeSteps, rng=None):
-    generator = np.random.default_rng() if rng is None else rng
-    ST = simulate_terminal_prices(S0, r, sigma, T, numofPaths, rng=generator)
+    from G_Brownian_Motion.Monte_Carlo import monte_carlo_call_put as _monte_carlo_call_put
 
-    call = option_price_from_terminal_prices(ST, K, r, T, option_type="call")
-    put = option_price_from_terminal_prices(ST, K, r, T, option_type="put")
-
-    return {"call": call, "put": put}
-
-
-def main():
-    print("Test")
-
-
-
-
-if __name__ == "__main__":
-    main()
+    return _monte_carlo_call_put(
+        S0,
+        K,
+        r,
+        sigma,
+        T,
+        numofPaths,
+        timeSteps=timeSteps,
+        rng=rng,
+    )

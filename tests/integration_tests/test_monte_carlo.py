@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from G_Brownian_Motion import Geometric_BM as gbm
+from G_Brownian_Motion.Monte_Carlo import MonteCarlo
 
 
 def _normal_cdf(value):
@@ -32,17 +32,17 @@ def test_seeded_monte_carlo_price_converges_to_black_scholes(option_type):
     num_paths = 200_000
     rng = np.random.default_rng(20260421)
 
-    result = gbm.monte_carlo_option_price(
+    pricer = MonteCarlo(
         spot,
         strike,
         rate,
         sigma,
         maturity,
-        numofPaths=num_paths,
-        timeSteps=365,
-        option_type=option_type,
+        num_paths=num_paths,
+        time_steps=365,
         rng=rng,
     )
+    result = pricer.price(option_type=option_type)
 
     expected_price = _black_scholes_price(sigma, rate, maturity, strike, spot, option_type)
     tolerance = max(0.10, 5.0 * result["std_error"])
